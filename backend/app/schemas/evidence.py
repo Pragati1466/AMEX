@@ -18,6 +18,7 @@ class EvidenceItemResponse(BaseModel):
     status: str
     title: Optional[str] = None
     description: Optional[str] = None
+    content_text: Optional[str] = None
     source_table: Optional[str] = None
     source_external_id: Optional[str] = None
     event_date: Optional[datetime] = None
@@ -30,7 +31,9 @@ class EvidenceItemResponse(BaseModel):
     order_id_ref: Optional[str] = None
     file_url: Optional[str] = None
     file_type: Optional[str] = None
+    file_size_bytes: Optional[int] = None
     is_processed: bool
+    processing_notes: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

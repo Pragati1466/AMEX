@@ -130,6 +130,7 @@ def get_case_file(
             status=e.status.value if e.status else "unknown",
             title=e.title,
             description=e.description,
+            content_text=e.content_text,
             source_table=e.source_table,
             source_external_id=e.source_external_id,
             event_date=e.event_date,
@@ -142,7 +143,9 @@ def get_case_file(
             order_id_ref=e.order_id_ref,
             file_url=e.file_url,
             file_type=e.file_type,
+            file_size_bytes=e.file_size_bytes,
             is_processed=e.is_processed,
+            processing_notes=e.processing_notes,
         )
         for e in evidence_items
     ]
@@ -188,6 +191,7 @@ def list_evidence(
             status=e.status.value if e.status else "unknown",
             title=e.title,
             description=e.description,
+            content_text=e.content_text,
             source_table=e.source_table,
             source_external_id=e.source_external_id,
             event_date=e.event_date,
@@ -200,7 +204,9 @@ def list_evidence(
             order_id_ref=e.order_id_ref,
             file_url=e.file_url,
             file_type=e.file_type,
+            file_size_bytes=e.file_size_bytes,
             is_processed=e.is_processed,
+            processing_notes=e.processing_notes,
         )
         for e in items
     ]

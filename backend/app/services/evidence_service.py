@@ -17,6 +17,7 @@ from app.models.new import (
     EvidenceType, EvidenceSource, EvidenceStatus,
 )
 from app.utils.cloudinary import upload_file
+from app.utils.document_processor import extract_text_from_bytes, is_supported_file
 
 
 class EvidenceService:
@@ -109,6 +110,13 @@ class EvidenceService:
         file_url = upload_result.get("url") if upload_result else None
         file_size = upload_result.get("bytes") if upload_result else len(file_data)
 
+        # Extract text from the uploaded document
+        extracted_text = extract_text_from_bytes(
+            file_data=file_data,
+            filename=file.filename or "unknown",
+            mime_type=file.content_type,
+        )
+
         # Store in evidence repository
         evidence = EvidenceRepoModel(
             case_file_id=case_file.id,
@@ -118,10 +126,16 @@ class EvidenceService:
             status=EvidenceStatus.COLLECTED,
             title=title,
             description=description,
+            content_text=extracted_text if extracted_text else None,
             file_url=file_url,
             file_type=file.content_type,
             file_size_bytes=file_size,
-            is_processed=False,
+            is_processed=bool(extracted_text),
+            processing_notes=(
+                f"Text extraction completed: {len(extracted_text)} characters extracted"
+                if extracted_text
+                else "No text could be extracted from this file"
+            ),
         )
         self.db.add(evidence)
         self.db.commit()
@@ -134,17 +148,24 @@ class EvidenceService:
             entity_id=evidence.id,
             dispute_id=dispute_id,
             case_file_id=case_file.id,
-            details=f"Uploaded evidence file: {file.filename}",
+            details=(
+                f"Uploaded evidence file: {file.filename}. "
+                f"Text extracted: {len(extracted_text)} characters."
+            ),
         )
         self.db.add(log)
         self.db.commit()
 
-        logger.info(f"Evidence file uploaded: {file.filename} for dispute {dispute_id}")
+        logger.info(
+            f"Evidence file uploaded: {file.filename} for dispute {dispute_id}. "
+            f"Extracted {len(extracted_text)} chars."
+        )
 
         return {
             "success": True,
             "message": "File uploaded successfully",
             "evidence": evidence,
+            "extracted_text_length": len(extracted_text),
         }
 
     def get_case_file(self, case_file_id: int) -> Optional[CaseFile]:
