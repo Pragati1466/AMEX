@@ -1,0 +1,13 @@
+{
+  "name": "disputiq-frontend",
+  "version": "1.0.0",
+  "description": "Simple frontend for DisputeIQ API",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "dev": "python -m http.server 3000"
+  },
+  "keywords": ["disputeiq", "api", "frontend"],
+  "author": "",
+  "license": "MIT"
+}
