@@ -1,0 +1,497 @@
+{
+  "info": {
+    "name": "DisputeIQ API Collection",
+    "description": "API collection for DisputeIQ Investigation System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["health"]
+        },
+        "description": "Health check endpoint for monitoring"
+      }
+    },
+    {
+      "name": "Investigation Workflow",
+      "item": [
+        {
+          "name": "Run Investigation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"clear_existing\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/investigate/:dispute_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "investigate", ":dispute_id"],
+              "variable": [
+                {
+                  "key": "dispute_id",
+                  "value": "1",
+                  "description": "Dispute ID to investigate"
+                }
+              ]
+            },
+            "description": "Trigger complete investigation workflow for a dispute"
+        },
+        {
+          "name": "Get Investigation Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/investigate/:dispute_id/status",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "investigate", ":dispute_id", "status"],
+              "variable": [
+                {
+                  "key": "dispute_id",
+                  "value": "1",
+                  "description": "Dispute ID"
+                }
+              ]
+            },
+            "description": "Get current investigation status"
+        },
+        {
+          "name": "Submit Investigation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/investigate/:dispute_id/submit",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "investigate", ":dispute_id", "submit"],
+              "variable": [
+                {
+                  "key": "dispute_id",
+                  "value": "1",
+                  "description": "Dispute ID"
+                }
+              ]
+            },
+            "description": "Submit completed investigation"
+        }
+      ]
+    },
+    {
+      "name": "Evidence Collection",
+      "item": [
+        {
+          "name": "Collect Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispute_id\": 1,\n  \"user_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/evidence/collect",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "evidence", "collect"]
+            },
+            "description": "Collect evidence for a dispute"
+        },
+        {
+          "name": "Get Evidence List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/evidence/case-file/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "evidence", "case-file", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get evidence list for a case file"
+        }
+      ]
+    },
+    {
+      "name": "Timeline Reconstruction",
+      "item": [
+        {
+          "name": "Reconstruct Timeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clear_existing\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/timeline/reconstruct/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000,
+              "path": ["api", "v1", "timeline", "reconstruct", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Reconstruct timeline for a case file"
+        },
+        {
+          "name": "Get Timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/timeline/case-file/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "timeline", "case-file", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get timeline for a case file"
+        },
+        {
+          "name": "Get Timeline Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/timeline/summary/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "timeline", "summary", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get timeline summary statistics"
+        }
+      ]
+    },
+    {
+      "name": "Evidence Validation",
+      "item": [
+        {
+          "name": "Validate Case File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clear_existing\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/validation/validate/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "validation", "validate", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Validate case file evidence"
+        },
+        {
+          "name": "Get Validations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/validation/case-file/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "validation", "case-file", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get validation results for a case file"
+        },
+        {
+          "name": "Resolve Validation",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/validation/resolve/:validation_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "validation", "resolve", ":validation_id"],
+              "variable": [
+                {
+                  "key": "validation_id",
+                  "value": "1",
+                  "description": "Validation ID"
+                }
+              ]
+            },
+            "description": "Resolve a validation issue"
+        }
+      ]
+    },
+    {
+      "name": "Policy Mapping",
+      "item": [
+        {
+          "name": "Map Policies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clear_existing\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/policy/map/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "policy", "map", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Map applicable policies to case file"
+        },
+        {
+          "name": "Get Policy Mappings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/policy/case-file/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "policy", "case-file", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get policy mappings for a case file"
+        },
+        {
+          "name": "Semantic Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"product not received\",\n  \"limit\": 5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/policy/search",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "policy", "search"]
+            },
+            "description": "Search policies using semantic search"
+        }
+      ]
+    },
+    {
+      "name": "Case File Generation",
+      "item": [
+        {
+          "name": "Generate Case File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/v1/case-file/generate/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "case-file", "generate", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Generate case file with investigation summary"
+        },
+        {
+          "name": "Get Case File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/case-file/:case_file_id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "case-file", ":case_file_id"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get case file details"
+        },
+        {
+          "name": "Get Standardized Package",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/case-file/:case_file_id/package",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "case-file", ":case_file_id", "package"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get standardized package for Module 2"
+        },
+        {
+          "name": "Get Confidence Score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/v1/case-file/:case_file_id/confidence",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "v1", "case-file", ":case_file_id", "confidence"],
+              "variable": [
+                {
+                  "key": "case_file_id",
+                  "value": "1",
+                  "description": "Case File ID"
+                }
+              ]
+            },
+            "description": "Get confidence score analysis"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "description": "Base URL for the API"
+    }
+  ]
+}
