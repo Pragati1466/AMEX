@@ -9,6 +9,11 @@ from app.schemas.timeline import (
     TimelineAnalysis, ManualEventRequest, UpdateEventRequest,
     ReconstructTimelineRequest, ReconstructTimelineResponse,
 )
+from app.schemas.validation import (
+    ValidationResponse, ValidationSummary, ValidationListResponse,
+    ValidateCaseFileRequest, ValidateCaseFileResponse,
+    ValidationAnalysis, CompletenessAnalysis, AISuggestion,
+)
 
 __all__ = [
     "TokenResponse", "LoginRequest", "UserCreate", "UserResponse",
@@ -18,4 +23,7 @@ __all__ = [
     "TimelineEventResponse", "TimelineResponse", "TimelineSummary",
     "TimelineAnalysis", "ManualEventRequest", "UpdateEventRequest",
     "ReconstructTimelineRequest", "ReconstructTimelineResponse",
+    "ValidationResponse", "ValidationSummary", "ValidationListResponse",
+    "ValidateCaseFileRequest", "ValidateCaseFileResponse",
+    "ValidationAnalysis", "CompletenessAnalysis", "AISuggestion",
 ]
