@@ -11,7 +11,12 @@ from app.core.database import Base
 from app.core.config import settings
 
 # Import all models so Alembic can detect them
-from app.models import User
+from app.models import (
+    User, Customer, Merchant, Transaction, Order, Payment,
+    RefundHistory, Communication, Dispute, PolicyRepository,
+    CaseFile, EvidenceRepository, TimelineEvent,
+    EvidenceValidation, PolicyMapping, AuditLog,
+)
 
 # Alembic Config object
 config = context.config
