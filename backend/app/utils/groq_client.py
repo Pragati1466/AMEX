@@ -353,6 +353,54 @@ Recommendations:
                 "recommendations": ["Review evidence manually for completeness"],
             }
 
+    def generate_investigation_summary(self, context: str) -> str:
+        """
+        Generate an investigation summary using AI.
+
+        Args:
+            context: Investigation context including dispute details, evidence, timeline, etc.
+
+        Returns:
+            Generated investigation summary text.
+        """
+        if not self.is_available():
+            return "AI summary generation unavailable - use rule-based summary"
+
+        try:
+            prompt = f"""
+Investigation Context:
+{context}
+
+Please generate a concise investigation summary that includes:
+1. Brief overview of the dispute
+2. Key findings from evidence
+3. Timeline highlights
+4. Validation issues (if any)
+5. Applicable policies
+6. Overall confidence assessment
+
+Keep the summary professional and focused on facts. Limit to 300 words.
+"""
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert payment dispute investigator. Generate clear, factual investigation summaries.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+                max_tokens=500,
+            )
+
+            return response.choices[0].message.content
+
+        except Exception as e:
+            logger.error(f"Groq investigation summary generation failed: {e}")
+            return "AI summary generation failed - review investigation details manually"
+
     def _parse_completeness_response(self, response_text: str) -> Dict[str, Any]:
         """Parse the completeness analysis response."""
         try:

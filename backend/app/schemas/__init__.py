@@ -1,6 +1,6 @@
 from app.schemas.auth import TokenResponse, LoginRequest, UserCreate, UserResponse
 from app.schemas.evidence import (
-    EvidenceItemResponse, CaseFileResponse, CaseFileDetailResponse,
+    EvidenceItemResponse, CaseFileResponse as EvidenceCaseFileResponse, CaseFileDetailResponse,
     CollectEvidenceRequest, CollectEvidenceResponse,
     UploadEvidenceRequest, EvidenceListResponse,
 )
@@ -21,10 +21,20 @@ from app.schemas.policy import (
     SemanticSearchRequest, SimilarCaseSearchRequest,
     IndexingStats, VectorStoreStats, VectorStoresStatsResponse,
 )
+from app.schemas.case_file import (
+    CaseFileResponse,
+    StandardizedPackage,
+    GenerateCaseFileRequest,
+    GenerateCaseFileResponse,
+    UpdateCaseFileStatusRequest,
+    ConfidenceAnalysis,
+    ConfidenceScoreBreakdown,
+    CaseFileListResponse,
+)
 
 __all__ = [
     "TokenResponse", "LoginRequest", "UserCreate", "UserResponse",
-    "EvidenceItemResponse", "CaseFileResponse", "CaseFileDetailResponse",
+    "EvidenceItemResponse", "EvidenceCaseFileResponse", "CaseFileDetailResponse",
     "CollectEvidenceRequest", "CollectEvidenceResponse",
     "UploadEvidenceRequest", "EvidenceListResponse",
     "TimelineEventResponse", "TimelineResponse", "TimelineSummary",
@@ -38,4 +48,9 @@ __all__ = [
     "UpdatePolicyMappingRequest", "VectorSearchResult",
     "SemanticSearchRequest", "SimilarCaseSearchRequest",
     "IndexingStats", "VectorStoreStats", "VectorStoresStatsResponse",
+    "CaseFileResponse", "StandardizedPackage",
+    "GenerateCaseFileRequest", "GenerateCaseFileResponse",
+    "UpdateCaseFileStatusRequest",
+    "ConfidenceAnalysis", "ConfidenceScoreBreakdown",
+    "CaseFileListResponse",
 ]
