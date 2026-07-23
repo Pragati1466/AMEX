@@ -90,3 +90,40 @@ class EvidenceListResponse(BaseModel):
 
     items: list[EvidenceItemResponse]
     total: int
+
+
+class ExtractedEntitiesResponse(BaseModel):
+    """Response schema for extracted entities."""
+
+    evidence_id: int
+    evidence_ref: str
+    is_processed: bool
+    merchant_name: Optional[str] = None
+    customer_name: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    transaction_id_ref: Optional[str] = None
+    order_id_ref: Optional[str] = None
+    content_json: Optional[dict] = None
+    processing_notes: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class BatchExtractionResult(BaseModel):
+    """Response schema for batch entity extraction."""
+
+    total: int
+    processed: int
+    skipped: int
+    errors: int
+    details: list[dict] = []
+
+
+class EntityExtractionRequest(BaseModel):
+    """Request to trigger entity extraction."""
+
+    evidence_id: Optional[int] = None
+    evidence_ref: Optional[str] = None
+    case_file_id: Optional[int] = None
+    re_extract: bool = False

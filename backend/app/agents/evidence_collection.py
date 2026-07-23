@@ -23,6 +23,7 @@ from app.models.new import (
     CaseFileStatus,
 )
 from app.repositories.evidence_repository import EvidenceRepositoryDB
+from app.utils.entity_extractor import update_evidence_from_text
 
 
 class EvidenceCollectionAgent:
@@ -121,7 +122,7 @@ class EvidenceCollectionAgent:
         file_type: Optional[str] = None,
         file_size_bytes: Optional[int] = None,
     ) -> EvidenceRepoModel:
-        """Create and store an evidence record."""
+        """Create and store an evidence record, then run entity extraction."""
         evidence = EvidenceRepoModel(
             case_file_id=case_file_id,
             evidence_id=f"EV-{uuid.uuid4().hex[:12].upper()}",
@@ -148,6 +149,21 @@ class EvidenceCollectionAgent:
         )
         self.db.add(evidence)
         self.db.flush()
+
+        # Run entity extraction on the content_text if present
+        if content_text and content_text.strip():
+            try:
+                update_evidence_from_text(evidence, content_text)
+                self.db.flush()
+                logger.debug(
+                    f"Entity extraction completed for evidence {evidence.evidence_id}: "
+                    f"merchant={evidence.merchant_name}, amount={evidence.amount}"
+                )
+            except Exception as e:
+                logger.error(f"Entity extraction failed for evidence {evidence.id}: {e}")
+                evidence.processing_notes = f"Entity extraction failed: {str(e)}"
+                self.db.flush()
+
         return evidence
 
     def _collect_customer_info(self, dispute: Dispute, case_file: CaseFile) -> None:

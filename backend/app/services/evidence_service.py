@@ -18,6 +18,7 @@ from app.models.new import (
 )
 from app.utils.cloudinary import upload_file
 from app.utils.document_processor import extract_text_from_bytes, is_supported_file
+from app.utils.entity_extractor import update_evidence_from_text
 
 
 class EvidenceService:
@@ -138,6 +139,26 @@ class EvidenceService:
             ),
         )
         self.db.add(evidence)
+        self.db.flush()
+
+        # Run entity extraction on the extracted text
+        entity_extraction_note = ""
+        if extracted_text:
+            try:
+                update_evidence_from_text(evidence, extracted_text)
+                entity_extraction_note = (
+                    f" Entities extracted: merchant={evidence.merchant_name}, "
+                    f"amount={evidence.amount}, date={evidence.transaction_id_ref}"
+                )
+                logger.debug(
+                    f"Entity extraction completed for uploaded evidence {evidence.evidence_id}"
+                )
+            except Exception as e:
+                logger.error(f"Entity extraction failed for uploaded evidence: {e}")
+                evidence.processing_notes = (
+                    f"{evidence.processing_notes or ''} Entity extraction failed: {str(e)}"
+                )
+
         self.db.commit()
         self.db.refresh(evidence)
 
@@ -151,6 +172,7 @@ class EvidenceService:
             details=(
                 f"Uploaded evidence file: {file.filename}. "
                 f"Text extracted: {len(extracted_text)} characters."
+                f"{entity_extraction_note}"
             ),
         )
         self.db.add(log)
@@ -158,7 +180,7 @@ class EvidenceService:
 
         logger.info(
             f"Evidence file uploaded: {file.filename} for dispute {dispute_id}. "
-            f"Extracted {len(extracted_text)} chars."
+            f"Extracted {len(extracted_text)} chars.{entity_extraction_note}"
         )
 
         return {

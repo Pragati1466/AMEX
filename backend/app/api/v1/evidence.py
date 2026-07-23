@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.models.new import EvidenceRepository as EvidenceRepoModel
 from app.models.user import User
 from app.services.evidence_service import EvidenceService
+from app.services.entity_extraction_service import EntityExtractionService
 from app.schemas.evidence import (
     CollectEvidenceRequest,
     CollectEvidenceResponse,
@@ -16,6 +18,9 @@ from app.schemas.evidence import (
     CaseFileDetailResponse,
     EvidenceItemResponse,
     EvidenceListResponse,
+    ExtractedEntitiesResponse,
+    BatchExtractionResult,
+    EntityExtractionRequest,
 )
 
 router = APIRouter(prefix="/evidence", tags=["Evidence Collection"])
@@ -215,3 +220,98 @@ def list_evidence(
         items=evidence_responses,
         total=len(evidence_responses),
     )
+
+
+# --------------- Entity Extraction Endpoints ---------------
+
+
+@router.post("/extract", response_model=ExtractedEntitiesResponse)
+def extract_entities_from_evidence(
+    payload: EntityExtractionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Trigger entity extraction on a single evidence item.
+    Provide either evidence_id, evidence_ref, or case_file_id.
+
+    - evidence_id: Primary key of the evidence record.
+    - evidence_ref: The evidence reference ID (e.g., 'EV-ABC123...').
+    - case_file_id: Extract entities for ALL evidence in a case file.
+    - re_extract: If True, re-run extraction even if already processed.
+    """
+    service = EntityExtractionService(db)
+
+    # Case 1: Extract for entire case file
+    if payload.case_file_id is not None:
+        result = service.extract_for_case_file(
+            payload.case_file_id, re_extract=payload.re_extract
+        )
+        return ExtractedEntitiesResponse(
+            evidence_id=0,
+            evidence_ref=f"batch_{payload.case_file_id}",
+            is_processed=True,
+            processing_notes=(
+                f"Batch extraction: {result['processed']} processed, "
+                f"{result['errors']} errors out of {result['total']} items"
+            ),
+        )
+
+    # Case 2: Extract by evidence_ref
+    if payload.evidence_ref:
+        entities = service.extract_for_evidence_by_ref(
+            payload.evidence_ref, re_extract=payload.re_extract
+        )
+        if entities is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Evidence with ref '{payload.evidence_ref}' not found",
+            )
+        # Fetch the updated record to get all fields
+        result = service.get_extracted_entities(
+            service.db.query(EvidenceRepoModel)
+            .filter(EvidenceRepoModel.evidence_id == payload.evidence_ref)
+            .first()
+            .id
+        )
+        return ExtractedEntitiesResponse(**result)
+
+    # Case 3: Extract by evidence_id
+    if payload.evidence_id is not None:
+        entities = service.extract_for_evidence(
+            payload.evidence_id, re_extract=payload.re_extract
+        )
+        if entities is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Evidence with id '{payload.evidence_id}' not found",
+            )
+        result = service.get_extracted_entities(payload.evidence_id)
+        return ExtractedEntitiesResponse(**result)
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Provide one of: evidence_id, evidence_ref, or case_file_id",
+    )
+
+
+@router.get("/{evidence_id}/entities", response_model=ExtractedEntitiesResponse)
+def get_entities(
+    evidence_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get previously extracted entities for an evidence item.
+    Does NOT re-run extraction.
+    """
+    service = EntityExtractionService(db)
+    result = service.get_extracted_entities(evidence_id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Evidence with id '{evidence_id}' not found",
+        )
+
+    return ExtractedEntitiesResponse(**result)
