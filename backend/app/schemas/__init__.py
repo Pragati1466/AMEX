@@ -14,6 +14,13 @@ from app.schemas.validation import (
     ValidateCaseFileRequest, ValidateCaseFileResponse,
     ValidationAnalysis, CompletenessAnalysis, AISuggestion,
 )
+from app.schemas.policy import (
+    PolicyResponse, PolicyMappingResponse, PolicyMappingSummary,
+    PolicyMappingListResponse, MapPoliciesRequest, MapPoliciesResponse,
+    UpdatePolicyMappingRequest, VectorSearchResult,
+    SemanticSearchRequest, SimilarCaseSearchRequest,
+    IndexingStats, VectorStoreStats, VectorStoresStatsResponse,
+)
 
 __all__ = [
     "TokenResponse", "LoginRequest", "UserCreate", "UserResponse",
@@ -26,4 +33,9 @@ __all__ = [
     "ValidationResponse", "ValidationSummary", "ValidationListResponse",
     "ValidateCaseFileRequest", "ValidateCaseFileResponse",
     "ValidationAnalysis", "CompletenessAnalysis", "AISuggestion",
+    "PolicyResponse", "PolicyMappingResponse", "PolicyMappingSummary",
+    "PolicyMappingListResponse", "MapPoliciesRequest", "MapPoliciesResponse",
+    "UpdatePolicyMappingRequest", "VectorSearchResult",
+    "SemanticSearchRequest", "SimilarCaseSearchRequest",
+    "IndexingStats", "VectorStoreStats", "VectorStoresStatsResponse",
 ]

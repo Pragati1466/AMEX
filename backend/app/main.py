@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from app.core.config import settings
-from app.api.v1 import auth, evidence, timeline, validation
+from app.api.v1 import auth, evidence, timeline, validation, policy
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -35,6 +35,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(evidence.router, prefix="/api/v1")
 app.include_router(timeline.router, prefix="/api/v1")
 app.include_router(validation.router, prefix="/api/v1")
+app.include_router(policy.router, prefix="/api/v1")
 
 
 @app.get("/")
