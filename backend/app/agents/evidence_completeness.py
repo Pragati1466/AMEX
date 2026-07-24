@@ -19,8 +19,8 @@ from app.models.new import (
     EvidenceType,
     ValidationCategory,
     ValidationSeverity,
-    DisputeReason,
 )
+from app.models.existing import DisputeReason
 from app.repositories.validation_repository import ValidationRepository
 from app.repositories.evidence_repository import EvidenceRepositoryDB
 from app.utils.groq_client import GroqClient
