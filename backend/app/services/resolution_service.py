@@ -135,6 +135,68 @@ class ResolutionService:
             total=len(responses),
         )
 
+    async def request_evidence(
+        self,
+        case_id: int,
+        recommendation_id: str,
+        actor: Optional[User] = None,
+        submitted_by_role: str = "investigator",
+    ) -> Optional[EvidenceRecommendationResponse]:
+        """Formally request evidence for a specific recommendation.
+
+        Transitions the recommendation from OPEN to REQUESTED.
+        """
+        dispute = self._resolve_case_id(case_id)
+        if not dispute:
+            return None
+
+        from app.models.resolution import EvidenceRecommendation, EvidenceRecommendationStatus
+        rec = (
+            self.db.query(EvidenceRecommendation)
+            .filter(
+                EvidenceRecommendation.dispute_id == dispute.id,
+                EvidenceRecommendation.recommendation_id == recommendation_id,
+                EvidenceRecommendation.status == EvidenceRecommendationStatus.OPEN,
+            )
+            .first()
+        )
+        if not rec:
+            return None
+
+        previous_status = rec.status
+        rec.status = EvidenceRecommendationStatus.REQUESTED
+        self.db.commit()
+        self.db.refresh(rec)
+
+        self.audit_service.log(
+            dispute_id=dispute.id,
+            action="evidence_recommendation_requested",
+            event_type=ResolutionAuditEventType.RECOMMENDATION_CHANGED,
+            actor_id=actor.id if actor else None,
+            actor_role=submitted_by_role,
+            previous_state={"status": previous_status.value},
+            new_state={"status": rec.status.value, "recommendation_id": rec.recommendation_id},
+        )
+        self.notification_service.create(
+            dispute_id=dispute.id,
+            event_type=NotificationEventType.EVIDENCE_REQUESTED,
+            title="Evidence Requested",
+            message=f"Evidence requested: {rec.description}",
+            user_id=actor.id if actor else None,
+        )
+        await self._broadcast(dispute.id, "evidence_requested", {
+            "recommendation_id": rec.recommendation_id,
+            "evidence_type": rec.evidence_type,
+            "status": rec.status.value,
+        })
+
+        return EvidenceRecommendationResponse(
+            id=rec.id, recommendation_id=rec.recommendation_id, case_id=dispute.id,
+            evidence_type=rec.evidence_type, description=rec.description, reason=rec.reason,
+            priority=rec.priority, requested_from=rec.requested_from, status=rec.status,
+            created_at=rec.created_at, resolved_at=rec.resolved_at,
+        )
+
     async def submit_evidence(
         self,
         case_id: int,
@@ -468,6 +530,42 @@ class ResolutionService:
         self.db.refresh(decision)
         return decision
 
+    async def _complete_resolution(
+        self,
+        dispute: Dispute,
+        decision: FinalDecision,
+        actor: User,
+    ) -> None:
+        """Transition resolution to COMPLETED after a final decision is recorded."""
+        state = self.dashboard_agent.get_state(dispute.id)
+        if state:
+            state.resolution_readiness = ResolutionReadiness.COMPLETED
+            self.db.commit()
+            self.db.refresh(state)
+
+        self.notification_service.create(
+            dispute_id=dispute.id,
+            event_type=NotificationEventType.RESOLUTION_COMPLETED,
+            title="Resolution Completed",
+            message=f"Resolution {decision.decision_id} recorded. Case marked as completed.",
+            user_id=actor.id,
+        )
+        self.audit_service.log(
+            dispute_id=dispute.id,
+            action="resolution_completed",
+            event_type=ResolutionAuditEventType.FINAL_DECISION_RECORDED,
+            actor_id=actor.id,
+            actor_role=actor.role.value,
+            new_state={
+                "resolution_readiness": state.resolution_readiness.value if state else None,
+                "decision_id": decision.decision_id,
+            },
+        )
+        await self._broadcast(dispute.id, "resolution_completed", {
+            "decision_id": decision.decision_id,
+            "resolution_readiness": state.resolution_readiness.value if state else None,
+        })
+
     async def approve_decision(self, case_id: int, rationale: Optional[str], actor: User) -> Optional[FinalDecisionView]:
         dispute = self._resolve_case_id(case_id)
         if not dispute:
@@ -478,6 +576,8 @@ class ResolutionService:
 
         rat = rationale or f"Investigator approved AI recommendation: {state.ai_recommendation.value}"
         decision = self._record_decision(dispute, state.ai_recommendation, rat, FinalDecisionType.APPROVED, actor)
+
+        await self._complete_resolution(dispute, decision, actor)
 
         self.audit_service.log(
             dispute_id=dispute.id, action="investigator_approved",
@@ -503,6 +603,7 @@ class ResolutionService:
         decision = self._record_decision(
             dispute, RecommendationOutcome.ESCALATE_TO_HUMAN, rationale, FinalDecisionType.REJECTED, actor,
         )
+        await self._complete_resolution(dispute, decision, actor)
         self.audit_service.log(
             dispute_id=dispute.id, action="investigator_rejected",
             event_type=ResolutionAuditEventType.INVESTIGATOR_REJECTED,
@@ -523,6 +624,7 @@ class ResolutionService:
         if not dispute:
             return None
         decision = self._record_decision(dispute, outcome, rationale, FinalDecisionType.MODIFIED, actor)
+        await self._complete_resolution(dispute, decision, actor)
         self.audit_service.log(
             dispute_id=dispute.id, action="investigator_modified",
             event_type=ResolutionAuditEventType.INVESTIGATOR_MODIFIED,

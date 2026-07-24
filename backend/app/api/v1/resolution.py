@@ -102,6 +102,27 @@ def generate_evidence_recommendations(
     return result
 
 
+@router.post("/{case_id}/evidence-recommendations/{recommendation_id}/request", response_model=EvidenceRecommendationResponse)
+async def request_evidence(
+    case_id: int,
+    recommendation_id: str,
+    submitted_by_role: str = Form("investigator"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(_require_investigator),
+):
+    """Formally request evidence for a specific recommendation."""
+    service = ResolutionService(db)
+    result = await service.request_evidence(
+        case_id=case_id,
+        recommendation_id=recommendation_id,
+        actor=current_user,
+        submitted_by_role=submitted_by_role,
+    )
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found or not in OPEN status")
+    return result
+
+
 @router.post("/{case_id}/evidence")
 async def submit_evidence(
     case_id: int,
