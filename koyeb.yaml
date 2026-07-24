@@ -1,0 +1,49 @@
+# Koyeb deployment config for DisputeIQ
+# https://www.koyeb.com/docs/build-and-deploy
+
+name: disputiq-api
+service:
+  port: 8000
+  
+  # Build from source
+  source:
+    # GitHub repository
+    github:
+      branch: main
+      build:
+        - cd backend && pip install -r requirements.txt
+        - cd backend && python -m spacy download en_core_web_sm
+    
+    # Run command
+    start: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  
+  # Environment variables
+  env:
+    - key: APP_NAME
+      value: DisputeIQ
+    - key: APP_VERSION
+      value: 1.0.0
+    - key: APP_DESCRIPTION
+      value: AI-Powered Multi-Agent Dispute Resolution System
+    - key: DATABASE_URL
+      value: sqlite:///./disputiq.db
+    - key: SECRET_KEY
+      generator: query_string  # Auto-generates a secret key
+    - key: ALGORITHM
+      value: HS256
+    - key: ACCESS_TOKEN_EXPIRE_MINUTES
+      value: "30"
+    - key: CORS_ORIGINS
+      value: '["*"]'
+    - key: LOG_LEVEL
+      value: INFO
+    - key: CHROMA_PERSIST_DIR
+      value: ./chroma_db
+    - key: GROQ_API_KEY
+      value: ""
+    - key: CLOUDINARY_CLOUD_NAME
+      value: ""
+    - key: CLOUDINARY_API_KEY
+      value: ""
+    - key: CLOUDINARY_API_SECRET
+      value: ""
