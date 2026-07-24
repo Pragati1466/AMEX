@@ -10,7 +10,7 @@ services:
       pip install -r requirements.txt
       python -m spacy download en_core_web_sm
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    healthCheckPath: /
     envVars:
       - key: APP_NAME
         value: DisputeIQ
@@ -18,20 +18,22 @@ services:
         value: 1.0.0
       - key: APP_DESCRIPTION
         value: AI-Powered Multi-Agent Dispute Resolution System
-      - key: DATABASE_URL
-        value: sqlite:///./disputiq.db
-      - key: SECRET_KEY
-        generateValue: true
-      - key: ALGORITHM
-        value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "30"
-      - key: CORS_ORIGINS
-        value: '["*"]'
-      - key: LOG_LEVEL
-        value: INFO
+      - key: ALGORITHM
+        value: HS256
       - key: CHROMA_PERSIST_DIR
         value: ./chroma_db
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: DATABASE_URL
+        value: sqlite:///./disputiq.db
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
