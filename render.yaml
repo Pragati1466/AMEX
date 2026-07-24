@@ -1,0 +1,50 @@
+# Render Blueprint for DisputeIQ API
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: disputiq-api
+    env: python
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_sm
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: DisputeIQ
+      - key: APP_VERSION
+        value: 1.0.0
+      - key: APP_DESCRIPTION
+        value: AI-Powered Multi-Agent Dispute Resolution System
+      - key: DATABASE_URL
+        fromDatabase:
+          name: disputiq-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CHROMA_PERSIST_DIR
+        value: ./chroma_db
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+databases:
+  - name: disputiq-db
+    plan: free
+    databaseName: disputiq
+    user: disputiq_user
