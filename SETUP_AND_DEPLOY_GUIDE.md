@@ -31,9 +31,33 @@
 - Deploy the API
 - Give you a public URL like: `https://disputiq-api.onrender.com`
 
-### Step 3: Test Your Deployed API
+### Step 3: Add Required Env Variables (Important!)
 
-Open this in your browser:
+After deploying, you need to add a `SECRET_KEY` manually (Render generates it but let's verify):
+
+1. Go to **Render Dashboard** → Your service (`disputiq-api`)
+2. Click **"Environment"** tab
+3. Click **"Add Environment Variable"**
+4. Add these (or verify they exist):
+
+| Key | Value | Required? |
+|-----|-------|-----------|
+| `DATABASE_URL` | ✅ Auto-set by Render Blueprint | **YES** |
+| `SECRET_KEY` | Click **"Generate Value"** button | **YES** |
+| `ALGORITHM` | `HS256` | ✅ Auto-set |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | ✅ Auto-set |
+| `CORS_ORIGINS` | `["*"]` | ✅ Auto-set |
+| `GROQ_API_KEY` | `gsk_your_key_here` (get from https://console.groq.com) | **Optional** (needed for AI features) |
+| `CLOUDINARY_CLOUD_NAME` | `your_cloud_name` | **Optional** (needed for file uploads) |
+| `CLOUDINARY_API_KEY` | `your_api_key` | Optional |
+| `CLOUDINARY_API_SECRET` | `your_api_secret` | Optional |
+
+> **Note**: For basic testing, only `DATABASE_URL` and `SECRET_KEY` are required. The API works without the others!
+
+### Step 4: Rebuild & Test
+
+After adding env vars, Render will auto-redeploy. Wait 1-2 minutes, then open:
+
 ```
 https://disputiq-api.onrender.com/docs
 ```
@@ -42,7 +66,7 @@ You'll see the Swagger UI with all endpoints ready to test!
 
 ---
 
-## 💻 Option 2: Run Locally (For Development)
+## � Option 2: Run Locally (For Development)
 
 ### Prerequisites
 - Python 3.10+
