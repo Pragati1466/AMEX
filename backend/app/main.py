@@ -62,9 +62,16 @@ def health_check():
 @app.on_event("startup")
 def on_startup():
     """Initialize database tables and log startup."""
-    # Create all tables (works with both SQLite and PostgreSQL)
-    Base.metadata.create_all(bind=engine)
-    logger.info(f"Database tables created/verified successfully")
+    try:
+        # Create all tables (works with both SQLite and PostgreSQL)
+        logger.info(f"Connecting to database: {settings.DATABASE_URL[:30]}...")
+        Base.metadata.create_all(bind=engine)
+        logger.info(f"Database tables created/verified successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        logger.error(f"DATABASE_URL used: {settings.DATABASE_URL}")
+        # Don't crash - let the app start so health check can respond
+        logger.warning("Starting without database - some endpoints may fail")
     
     logger.info(f"{settings.APP_NAME} v{settings.APP_VERSION} is starting...")
     logger.info(f"Module: Investigation & Evidence Intelligence")
