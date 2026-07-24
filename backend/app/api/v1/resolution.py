@@ -27,6 +27,7 @@ from app.schemas.resolution import (
     DecisionRejectRequest,
     DecisionModifyRequest,
     SubmitEvidenceRequest,
+    CollaborationEventResponse,
 )
 
 router = APIRouter(prefix="/resolution", tags=["Resolution & Collaboration"])

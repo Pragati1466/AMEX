@@ -59,7 +59,6 @@ class ResolutionService:
         state = self.dashboard_agent.get_state(dispute_id)
         if state:
             return state
-        case_file = self.dashboard_agent.get_case_file(dispute_id)
         state, _ = self.rescoring_agent.rescore(dispute_id, reason="initial_scoring", force_fallback=True)
         return state
 

@@ -63,8 +63,11 @@ class RealTimeRescoringAgent:
         confidence: Optional[float],
         has_decision: bool,
         human_review: bool,
+        current_readiness: Optional[ResolutionReadiness] = None,
     ) -> ResolutionReadiness:
         if has_decision:
+            if current_readiness == ResolutionReadiness.COMPLETED:
+                return ResolutionReadiness.COMPLETED
             return ResolutionReadiness.DECISION_RECORDED
         if completeness >= 80 and confidence and confidence >= 0.6 and not human_review:
             return ResolutionReadiness.READY_FOR_DECISION
@@ -158,7 +161,8 @@ class RealTimeRescoringAgent:
             .count() > 0
         )
         state.resolution_readiness = self._determine_readiness(
-            completeness, new_conf, has_decision, state.human_review_required
+            completeness, new_conf, has_decision, state.human_review_required,
+            state.resolution_readiness,
         )
 
         score_change = None

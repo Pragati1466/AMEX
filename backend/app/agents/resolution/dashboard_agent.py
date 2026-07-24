@@ -9,7 +9,7 @@ from app.models.new import CaseFile, EvidenceValidation, ValidationCategory
 from app.models.resolution import (
     ResolutionState, FinalDecision, RescoringEvent,
     EvidenceRecommendation, ResolutionAuditLog, NotificationLog,
-    ResolutionReadiness,
+    ResolutionReadiness, RecommendationStatus,
 )
 from app.schemas.resolution import (
     ResolutionDashboardResponse, ResolutionStateResponse,
