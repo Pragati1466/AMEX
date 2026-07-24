@@ -50,7 +50,7 @@ class LiveFairnessDashboardAgent:
                 dispute_external_id=dispute.dispute_id,
                 dispute_status=dispute.status.value if dispute.status else None,
                 resolution_status=ResolutionReadiness.NOT_READY,
-                recommendation_status=ResolutionReadiness.NOT_READY,
+                recommendation_status=RecommendationStatus.PENDING,
                 human_review_required=True,
                 resolution_readiness=ResolutionReadiness.NOT_READY,
                 has_final_decision=has_decision,

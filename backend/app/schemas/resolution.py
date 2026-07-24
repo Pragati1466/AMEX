@@ -237,3 +237,13 @@ class GenerateRecommendationsResponse(BaseModel):
     message: str
     recommendations: list[EvidenceRecommendationResponse]
     total: int
+
+
+class CollaborationEventResponse(BaseModel):
+    id: int
+    event_type: str
+    description: Optional[str] = None
+    actor_role: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

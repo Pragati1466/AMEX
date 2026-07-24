@@ -546,6 +546,25 @@ class ResolutionService:
     def mark_notification_read(self, notification_id: int):
         return self.notification_service.mark_read(notification_id)
 
+    def get_collaboration_events(self, case_id: int) -> list:
+        dispute = self._resolve_case_id(case_id)
+        if not dispute:
+            return []
+        from app.schemas.resolution import CollaborationEventResponse
+        events = (
+            self.db.query(CollaborationEvent)
+            .filter(CollaborationEvent.dispute_id == dispute.id)
+            .order_by(CollaborationEvent.created_at.desc())
+            .all()
+        )
+        return [
+            CollaborationEventResponse(
+                id=e.id, event_type=e.event_type, description=e.description,
+                actor_role=e.actor_role, created_at=e.created_at,
+            )
+            for e in events
+        ]
+
     @staticmethod
     def is_investigator(user: User) -> bool:
         return user.role in (UserRole.INVESTIGATOR, UserRole.MANAGER, UserRole.ADMIN) or user.is_superuser

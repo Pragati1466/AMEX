@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, W
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import decode_access_token, get_current_user
 from app.models.user import User
 from app.services.resolution_service import ResolutionService
 from app.services.resolution_ws import resolution_ws_manager
@@ -314,9 +314,53 @@ def mark_notification_read(
     return {"success": True, "message": "Notification marked as read"}
 
 
+@router.get("/{case_id}/collaboration-events", response_model=list[CollaborationEventResponse])
+def get_collaboration_events(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get collaboration events for a case."""
+    service = ResolutionService(db)
+    dispute = service._resolve_case_id(case_id)
+    if not dispute:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Case {case_id} not found")
+    return service.get_collaboration_events(case_id)
+
+
 @router.websocket("/ws/{case_id}")
-async def resolution_websocket(websocket: WebSocket, case_id: int):
-    """WebSocket endpoint for live resolution updates."""
+async def resolution_websocket(websocket: WebSocket, case_id: int, db: Session = Depends(get_db)):
+    """WebSocket endpoint for live resolution updates with JWT authentication."""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication token")
+        return
+
+    try:
+        payload = decode_access_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid token payload")
+            return
+    except Exception:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid or expired token")
+        return
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user or not user.is_active:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="User not found or inactive")
+        return
+
+    service = ResolutionService(db)
+    dispute = service._resolve_case_id(case_id)
+    if not dispute:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Case not found")
+        return
+
+    if not ResolutionService.is_investigator(user):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Insufficient permissions")
+        return
+
     await resolution_ws_manager.connect(case_id, websocket)
     try:
         while True:
