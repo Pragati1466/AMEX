@@ -4,7 +4,7 @@ Loads environment variables from .env file.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -47,8 +47,38 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "DEBUG"
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+    # CORS - accept both JSON string and raw string for cross-env compatibility
+    CORS_ORIGINS: Union[str, list[str]] = ["http://localhost:3000", "http://localhost:5173"]
 
 
 settings = Settings()
+
+
+def get_cors_origins() -> list[str]:
+    """
+    Get CORS origins as a list, handling both JSON-encoded strings
+    and raw string values from environment variables.
+    Falls back to default if parsing fails.
+    """
+    import json
+    from loguru import logger
+
+    raw = settings.CORS_ORIGINS
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, str):
+        # Try JSON parsing (e.g., '["*"]', '["http://localhost:3000"]')
+        raw_stripped = raw.strip()
+        if raw_stripped.startswith("[") and raw_stripped.endswith("]"):
+            try:
+                parsed = json.loads(raw_stripped)
+                if isinstance(parsed, list):
+                    return parsed
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.warning(f"Failed to parse CORS_ORIGINS JSON: {e}")
+        # Comma-separated fallback
+        if "," in raw_stripped:
+            return [origin.strip().strip('"').strip("'") for origin in raw_stripped.split(",")]
+        # Single origin
+        return [raw_stripped.strip('"').strip("'")]
+    return ["*"]  # Fallback to allow all

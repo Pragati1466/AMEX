@@ -8,10 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
-from app.core.config import settings
+from app.core.config import settings, get_cors_origins
 from app.core.database import engine, Base
 from app.models import *  # noqa: F401, F403 - Import all models for table creation
-from app.api.v1 import auth, evidence, timeline, validation, policy, case_file
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -22,23 +21,45 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configure CORS
+# Configure CORS with robust origin parsing
+cors_origins = get_cors_origins()
+logger.info(f"Configuring CORS with origins: {cors_origins}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+# Lazy-load router modules to avoid OOM crashes during import on memory-constrained environments
+def _include_routers(app_instance: FastAPI) -> None:
+    """Import and include API routers lazily, with graceful fallback on import failure."""
+    from loguru import logger as _log
+    _log.info("Loading API router modules...")
+    
+    router_modules = [
+        ("auth", "app.api.v1.auth"),
+        ("evidence", "app.api.v1.evidence"),
+        ("timeline", "app.api.v1.timeline"),
+        ("validation", "app.api.v1.validation"),
+        ("policy", "app.api.v1.policy"),
+        ("case_file", "app.api.v1.case_file"),
+    ]
+    
+    for name, module_path in router_modules:
+        try:
+            import importlib
+            mod = importlib.import_module(module_path)
+            app_instance.include_router(mod.router, prefix="/api/v1")
+            _log.info(f"Included router: {name}")
+        except Exception as e:
+            _log.warning(f"Failed to load router '{name}': {e}. Endpoints under /api/v1/{name} will be unavailable.")
+
+
 # Include API routers
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(evidence.router, prefix="/api/v1")
-app.include_router(timeline.router, prefix="/api/v1")
-app.include_router(validation.router, prefix="/api/v1")
-app.include_router(policy.router, prefix="/api/v1")
-app.include_router(case_file.router, prefix="/api/v1")
+_include_routers(app)
 
 
 @app.get("/")
