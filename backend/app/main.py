@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from app.core.config import settings
+from app.core.database import engine, Base
+from app.models import *  # noqa: F401, F403 - Import all models for table creation
 from app.api.v1 import auth, evidence, timeline, validation, policy, case_file
 
 # Initialize FastAPI application
@@ -59,7 +61,11 @@ def health_check():
 # Startup event
 @app.on_event("startup")
 def on_startup():
-    """Log application startup."""
+    """Initialize database tables and log startup."""
+    # Create all tables (works with both SQLite and PostgreSQL)
+    Base.metadata.create_all(bind=engine)
+    logger.info(f"Database tables created/verified successfully")
+    
     logger.info(f"{settings.APP_NAME} v{settings.APP_VERSION} is starting...")
     logger.info(f"Module: Investigation & Evidence Intelligence")
     logger.info(f"Documentation: http://localhost:8000/docs")

@@ -19,9 +19,7 @@ services:
       - key: APP_DESCRIPTION
         value: AI-Powered Multi-Agent Dispute Resolution System
       - key: DATABASE_URL
-        fromDatabase:
-          name: disputiq-db
-          property: connectionString
+        value: sqlite:///./disputiq.db
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
@@ -42,9 +40,3 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-
-databases:
-  - name: disputiq-db
-    plan: free
-    databaseName: disputiq
-    user: disputiq_user
