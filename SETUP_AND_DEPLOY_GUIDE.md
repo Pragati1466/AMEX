@@ -3,14 +3,14 @@
 ## 📋 What You Need
 
 1. **GitHub account** (to fork the repo)
-2. **Koyeb account** (free at https://app.koyeb.com - sign up with GitHub, no credit card)
+2. **Render account** (free at https://dashboard.render.com - sign up with GitHub)
 3. **5 minutes** of your time
 
 ---
 
-## 🎯 Option 1: Deploy on Koyeb (RECOMMENDED - 100% FREE!)
+## 🎯 Option 1: Deploy on Render Web Service (RECOMMENDED - 100% FREE!)
 
-> **No credit card needed!** Koyeb has a free tier that works perfectly with our SQLite setup.
+> **⚠️ Use "Web Service" NOT "Blueprint"!** Blueprint tries to create a paid PostgreSQL database. Web Service free tier works perfectly with SQLite.
 
 ### Step 1: Fork the Repo on GitHub
 
@@ -19,40 +19,48 @@
 # Click "Fork" button (top right) → Create fork
 ```
 
-### Step 2: Deploy on Koyeb (Takes 2 minutes)
+### Step 2: Deploy on Render (Takes 3 minutes)
 
-1. **Go to** https://app.koyeb.com
-2. **Sign up** with GitHub (free account, no credit card)
-3. Click **"Create App"**
-4. **Select GitHub** → choose your forked repo
-5. **Set these fields**:
+1. **Go to** https://dashboard.render.com
+2. **Sign up** with GitHub (free account, no credit card needed)
+3. Click **"New +"** → **"Web Service"** (NOT Blueprint!)
+4. **Connect GitHub** → select your forked repo
+5. **Fill these fields exactly**:
 
 | Field | Value |
 |-------|-------|
-| App Name | `disputiq-api` |
-| Port | `8000` |
+| Name | `disputiq-api` |
+| Runtime | `Python 3` |
+| Region | (any, pick closest to you) |
+| Branch | `main` |
 | Build Command | `cd backend && pip install -r requirements.txt && python -m spacy download en_core_web_sm` |
-| Run Command | `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Start Command | `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Plan | **Free** ($0/month) ✅ |
 
-6. **Add Environment Variables**:
+6. Click **"Advanced"** → **"Add Environment Variables"**
 
 | Key | Value |
 |-----|-------|
 | `DATABASE_URL` | `sqlite:///./disputiq.db` |
 | `SECRET_KEY` | Click "Generate" button |
 | `CORS_ORIGINS` | `["*"]` |
+| `APP_NAME` | `DisputeIQ` |
+| `APP_VERSION` | `1.0.0` |
+| `ALGORITHM` | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` |
+| `LOG_LEVEL` | `INFO` |
 
-7. Click **"Deploy"**
+7. Click **"Create Web Service"**
 
-✅ **Koyeb will:**
-- Build the Python backend (takes ~2 mins)
-- Use SQLite (no database to create!)
-- Give you a free URL like: `https://disputiq-api-xxx.koyeb.app`
+✅ **Render will:**
+- Build the Python backend (~3 mins first time)
+- Use SQLite (no database setup!)
+- Give you a free URL like: `https://disputiq-api.onrender.com`
 
 ### Step 3: Open & Test
 
 ```
-https://disputiq-api-xxx.koyeb.app/docs
+https://disputiq-api.onrender.com/docs
 ```
 
 ---
@@ -117,7 +125,7 @@ Open: http://localhost:8000/docs
 ### Method 1: Swagger UI (Easiest - Just click buttons!)
 
 ```
-Open: https://disputiq-api-xxx.koyeb.app/docs
+Open: https://disputiq-api.onrender.com/docs
 ```
 
 **30-Second Demo:**
@@ -138,7 +146,7 @@ Create `test_api.py`:
 ```python
 import requests
 
-BASE = "https://disputiq-api-xxx.koyeb.app"  # Change to your Koyeb URL
+BASE = "https://disputiq-api.onrender.com"  # Change to your Render URL
 
 # 1. Health check
 r = requests.get(f"{BASE}/health")
@@ -221,9 +229,9 @@ python test_api.py
 
 ## 🔧 Troubleshooting
 
-### "Cannot connect to Koyeb"
+### "Cannot connect to Render"
 - Wait 2-3 minutes after deploying (it takes time to build)
-- Check: https://app.koyeb.com → your service → "Events" tab
+- Check: https://dashboard.render.com → your service → "Events" tab
 
 ### "401 Unauthorized"
 - You need to login first and get a token
@@ -242,11 +250,11 @@ python test_api.py
 
 ## 📤 How to Share with Friends
 
-### After deploying on Koyeb:
+### After deploying on Render:
 
 ```
 Hey! Our project is live at:
-https://disputiq-api-xxx.koyeb.app/docs
+https://disputiq-api.onrender.com/docs
 
 Just open this link and click "Try it out" on any endpoint!
 No setup needed. 🎉
@@ -264,8 +272,8 @@ Then try any endpoint with ID = 1
 ## ✅ Quick Checklist
 
 - [ ] Forked the repo on GitHub
-- [ ] Deployed on Koyeb
-- [ ] Can access Swagger UI at `https://disputiq-api-xxx.koyeb.app/docs`
+- [ ] Deployed on Render Web Service
+- [ ] Can access Swagger UI at `https://disputiq-api.onrender.com/docs`
 - [ ] Health check works
 - [ ] Can register a user
 - [ ] Can login and get token
@@ -282,9 +290,9 @@ Then try any endpoint with ID = 1
 | Step | What to do | Time |
 |------|-----------|------|
 | 1 | Fork repo on GitHub | 30 sec |
-| 2 | Deploy on Koyeb | 2 min |
+| 2 | Deploy Render Web Service | 3 min |
 | 3 | Open Swagger UI | 5 sec |
 | 4 | Test endpoints | 30 sec |
 | **Total** | | **~3 minutes** |
 
-**No local setup needed!** Just deploy on Koyeb and share the URL. 🚀
+**No local setup needed!** Just deploy on Render and share the URL. 🚀
