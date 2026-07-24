@@ -46,6 +46,7 @@ def _include_routers(app_instance: FastAPI) -> None:
         ("validation", "app.api.v1.validation"),
         ("policy", "app.api.v1.policy"),
         ("case_file", "app.api.v1.case_file"),
+        ("resolution", "app.api.v1.resolution"),
     ]
     
     for name, module_path in router_modules:
@@ -69,7 +70,7 @@ def root():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "running",
-        "module": "Investigation & Evidence Intelligence",
+        "module": "Investigation & Evidence Intelligence + Resolution & Collaboration",
     }
 
 
@@ -95,7 +96,7 @@ def on_startup():
         logger.warning("Starting without database - some endpoints may fail")
     
     logger.info(f"{settings.APP_NAME} v{settings.APP_VERSION} is starting...")
-    logger.info(f"Module: Investigation & Evidence Intelligence")
+    logger.info(f"Module: Investigation & Evidence Intelligence + Resolution & Collaboration")
     logger.info(f"Documentation: http://localhost:8000/docs")
 
 

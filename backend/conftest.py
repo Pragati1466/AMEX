@@ -103,7 +103,7 @@ def test_db(test_db_url):
     """Provide test database session."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
-    from app.database import Base
+    from app.core.database import Base
     
     # Create test database engine
     engine = create_engine(test_db_url, connect_args={"check_same_thread": False})

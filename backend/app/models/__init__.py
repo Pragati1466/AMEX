@@ -19,6 +19,15 @@ from app.models.new import (
     ValidationSeverity, ValidationCategory,
     TimelineEventType, PolicyMatchType, CaseFileStatus,
 )
+from app.models.resolution import (
+    ResolutionState, EvidenceRecommendation, RescoringEvent,
+    FinalDecision, ResolutionReport, NotificationLog,
+    ResolutionAuditLog, CollaborationEvent,
+    RecommendationOutcome, RecommendationStatus, ResolutionReadiness,
+    EvidenceRecommendationPriority, EvidenceRequestedFrom,
+    EvidenceRecommendationStatus, FinalDecisionType,
+    NotificationEventType, ResolutionAuditEventType,
+)
 
 __all__ = [
     "User",
@@ -55,4 +64,21 @@ __all__ = [
     "TimelineEventType",
     "PolicyMatchType",
     "CaseFileStatus",
+    "ResolutionState",
+    "EvidenceRecommendation",
+    "RescoringEvent",
+    "FinalDecision",
+    "ResolutionReport",
+    "NotificationLog",
+    "ResolutionAuditLog",
+    "CollaborationEvent",
+    "RecommendationOutcome",
+    "RecommendationStatus",
+    "ResolutionReadiness",
+    "EvidenceRecommendationPriority",
+    "EvidenceRequestedFrom",
+    "EvidenceRecommendationStatus",
+    "FinalDecisionType",
+    "NotificationEventType",
+    "ResolutionAuditEventType",
 ]

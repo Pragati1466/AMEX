@@ -16,6 +16,9 @@ from app.models import (
     RefundHistory, Communication, Dispute, PolicyRepository,
     CaseFile, EvidenceRepository, TimelineEvent,
     EvidenceValidation, PolicyMapping, AuditLog,
+    ResolutionState, EvidenceRecommendation, RescoringEvent,
+    FinalDecision, ResolutionReport, NotificationLog,
+    ResolutionAuditLog, CollaborationEvent,
 )
 
 # Alembic Config object
