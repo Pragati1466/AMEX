@@ -207,6 +207,38 @@ class ResolutionService:
         )
         self.db.commit()
 
+        # Transition matching evidence recommendations to RESOLVED
+        if evidence_obj:
+            transitioned = self.evidence_agent.match_and_transition_recommendations(
+                dispute_id=dispute.id,
+                evidence=evidence_obj,
+            )
+            for rec in transitioned:
+                self.audit_service.log(
+                    dispute_id=dispute.id,
+                    action="evidence_recommendation_resolved",
+                    event_type=ResolutionAuditEventType.RECOMMENDATION_CHANGED,
+                    actor_id=actor.id if actor else None,
+                    actor_role=submitted_by_role,
+                    new_state={
+                        "recommendation_id": rec.recommendation_id,
+                        "evidence_type": rec.evidence_type,
+                        "status": rec.status.value,
+                    },
+                )
+                self.notification_service.create(
+                    dispute_id=dispute.id,
+                    event_type=NotificationEventType.RECOMMENDATION_CHANGED,
+                    title="Evidence Recommendation Resolved",
+                    message=f"Recommendation '{rec.description}' resolved by submitted evidence",
+                    user_id=actor.id if actor else None,
+                )
+                await self._broadcast(dispute.id, "recommendation_resolved", {
+                    "recommendation_id": rec.recommendation_id,
+                    "evidence_type": rec.evidence_type,
+                    "status": rec.status.value,
+                })
+
         await self._broadcast(dispute.id, "evidence_submitted", {"title": title, "evidence_id": ev_id})
 
         state, event = self.rescoring_agent.rescore(dispute.id, reason="new_evidence", triggering_evidence_id=ev_id)

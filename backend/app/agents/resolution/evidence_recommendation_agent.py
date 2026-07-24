@@ -1,5 +1,6 @@
 """Smart Evidence Recommendation Agent — rule-based with optional LLM enhancement."""
 
+import datetime
 import uuid
 from typing import Any, Optional
 
@@ -196,3 +197,93 @@ class SmartEvidenceRecommendationAgent:
         for rec in created:
             self.db.refresh(rec)
         return created
+
+    def _evidence_text(self, evidence: EvidenceRepository) -> str:
+        """Concatenate searchable text fields from an evidence item."""
+        return " ".join(filter(None, [
+            (evidence.title or "").lower(),
+            (evidence.description or "").lower(),
+            (evidence.content_text or "").lower(),
+        ]))
+
+    def _evidence_matches_recommendation(
+        self,
+        rec: EvidenceRecommendation,
+        evidence_text: str,
+    ) -> bool:
+        """Check if submitted evidence satisfies a recommendation via keyword matching.
+
+        Mirrors the keyword approach already used by ``_existing_types``:
+        the recommendation ``evidence_type`` is a plain string label (e.g.
+        ``proof_of_delivery``) that does not map directly to the
+        ``EvidenceType`` enum on ``EvidenceRepository``.  We therefore check
+        whether the label — in both underscore and space form — appears in the
+        submitted evidence's title, description, or extracted content.
+        """
+        if not evidence_text:
+            return False
+
+        ev_type = (rec.evidence_type or "").strip()
+        match_phrases: list[str] = []
+
+        if ev_type and ev_type != "validation_gap":
+            match_phrases.append(ev_type)
+            match_phrases.append(ev_type.replace("_", " "))
+        elif ev_type == "validation_gap" and rec.description:
+            # For validation-gap recommendations the ``description`` holds the
+            # gap title (e.g. "Missing proof of delivery").  Strip common
+            # prefixes so the remaining phrase can match evidence text.
+            desc = rec.description.lower()
+            for prefix in ("missing ", "incomplete ", "absent ", "lack of "):
+                if desc.startswith(prefix):
+                    desc = desc[len(prefix):]
+                    break
+            match_phrases.append(desc.strip())
+
+        for phrase in match_phrases:
+            if phrase and phrase in evidence_text:
+                return True
+        return False
+
+    def match_and_transition_recommendations(
+        self,
+        dispute_id: int,
+        evidence: EvidenceRepository,
+    ) -> list[EvidenceRecommendation]:
+        """Match submitted evidence against open/requested recommendations.
+
+        Finds every ``EvidenceRecommendation`` for *dispute_id* whose status is
+        ``OPEN`` or ``REQUESTED`` and transitions those satisfied by the
+        submitted *evidence* to ``RESOLVED``, setting ``resolved_at``.
+
+        Returns the list of transitioned recommendations.
+        """
+        open_recs = (
+            self.db.query(EvidenceRecommendation)
+            .filter(
+                EvidenceRecommendation.dispute_id == dispute_id,
+                EvidenceRecommendation.status.in_([
+                    EvidenceRecommendationStatus.OPEN,
+                    EvidenceRecommendationStatus.REQUESTED,
+                ]),
+            )
+            .all()
+        )
+
+        evidence_text = self._evidence_text(evidence)
+
+        transitioned: list[EvidenceRecommendation] = []
+        for rec in open_recs:
+            if self._evidence_matches_recommendation(rec, evidence_text):
+                rec.status = EvidenceRecommendationStatus.RESOLVED
+                if rec.resolved_at is None:
+                    rec.resolved_at = datetime.datetime.utcnow()
+                transitioned.append(rec)
+
+        if transitioned:
+            self.db.commit()
+            for rec in transitioned:
+                self.db.refresh(rec)
+        return transitioned
+
+
