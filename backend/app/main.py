@@ -88,17 +88,16 @@ def _include_routers(app_instance: FastAPI) -> None:
     
     router_modules = [
         ("auth", "app.api.v1.auth"),
-        ("evidence", "app.api.v1.evidence"),  # Re-enabled to test
+        ("evidence", "app.api.v1.evidence"),
         ("timeline", "app.api.v1.timeline"),
         ("validation", "app.api.v1.validation"),
-        # ("policy", "app.api.v1.policy"),  # Temporarily disabled to debug
+        ("policy", "app.api.v1.policy"),  # Re-enabled - has lazy loading fix
         ("case_file", "app.api.v1.case_file"),
         ("resolution", "app.api.v1.resolution"),
     ]
     
     for name, module_path in router_modules:
         try:
-            _log.info(f"Attempting to load router: {name} from {module_path}")
             import importlib
             mod = importlib.import_module(module_path)
             app_instance.include_router(mod.router, prefix="/api/v1")
@@ -108,9 +107,7 @@ def _include_routers(app_instance: FastAPI) -> None:
 
 
 # Include API routers
-logger.info("About to include routers...")
 _include_routers(app)
-logger.info("All routers included successfully!")
 
 
 @app.get("/")
