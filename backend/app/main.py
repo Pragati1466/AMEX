@@ -88,7 +88,7 @@ def _include_routers(app_instance: FastAPI) -> None:
     
     router_modules = [
         ("auth", "app.api.v1.auth"),
-        # ("evidence", "app.api.v1.evidence"),  # Temporarily disabled to debug
+        ("evidence", "app.api.v1.evidence"),  # Re-enabled to test
         ("timeline", "app.api.v1.timeline"),
         ("validation", "app.api.v1.validation"),
         # ("policy", "app.api.v1.policy"),  # Temporarily disabled to debug
