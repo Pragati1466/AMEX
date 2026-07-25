@@ -91,7 +91,7 @@ def _include_routers(app_instance: FastAPI) -> None:
         ("evidence", "app.api.v1.evidence"),
         ("timeline", "app.api.v1.timeline"),
         ("validation", "app.api.v1.validation"),
-        ("policy", "app.api.v1.policy"),  # Re-enabled - has lazy loading fix
+        # ("policy", "app.api.v1.policy"),  # Disabled - too heavy for free Render tier
         ("case_file", "app.api.v1.case_file"),
         ("resolution", "app.api.v1.resolution"),
     ]
