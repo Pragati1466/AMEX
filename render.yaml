@@ -3,14 +3,15 @@
 
 services:
   - type: web
-    name: disputiq-api
+    name: disputiq-backend
     env: python
+    plan: free
     buildCommand: |
-      cd backend
       pip install -r requirements.txt
       python -m spacy download en_core_web_sm
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    healthCheckGracePeriod: 120
     envVars:
       - key: APP_NAME
         value: DisputeIQ
@@ -31,9 +32,9 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: 3.10.0
       - key: SECRET_KEY
-        sync: false
+        generateValue: true
       - key: GROQ_API_KEY
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
