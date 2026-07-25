@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { Shield, Clock, CheckCircle, AlertTriangle, Activity, FileText, BarChart3, Settings, LogOut } from 'lucide-react'
 import axios from 'axios'
 
-const API_BASE = 'http://localhost:8000/api/v1'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://disputiq-api.onrender.com/api/v1'
 
 function App() {
   const [apiStatus, setApiStatus] = useState('loading')
@@ -19,7 +19,7 @@ function App() {
   const checkApiStatus = async () => {
     const startTime = Date.now()
     try {
-      const response = await axios.get('http://localhost:8000/health')
+      const response = await axios.get(`${API_BASE.replace('/api/v1', '')}/health`)
       const endTime = Date.now()
       setResponseTime(endTime - startTime)
       setApiStatus('online')
