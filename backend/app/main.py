@@ -1,16 +1,24 @@
 """
 DisputeIQ - AI-Powered Multi-Agent Dispute Resolution System
-Module 1: Investigation & Evidence Intelligence
+Module 1: Investigation & Evidence Intelligence + Module 3: Resolution & Collaboration
 FastAPI Application Entry Point
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings, get_cors_origins
 from app.core.database import engine, Base
 from app.models import *  # noqa: F401, F403 - Import all models for table creation
+from app.utils.error_handler import (
+    DisputeIQError,
+    handle_database_error,
+    create_error_response,
+    log_and_handle_error
+)
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -31,6 +39,45 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Global exception handlers
+@app.exception_handler(DisputeIQError)
+async def disputeiq_error_handler(request: Request, exc: DisputeIQError):
+    """Handle DisputeIQ application errors."""
+    await log_and_handle_error(exc, f"Request: {request.url}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=create_error_response(exc)
+    )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def database_error_handler(request: Request, exc: SQLAlchemyError):
+    """Handle database errors."""
+    disputeiq_error = handle_database_error(exc)
+    await log_and_handle_error(exc, f"Database error in {request.url}")
+    return JSONResponse(
+        status_code=disputeiq_error.status_code,
+        content=create_error_response(disputeiq_error)
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle unexpected errors."""
+    await log_and_handle_error(exc, f"Unexpected error in {request.url}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": "An unexpected error occurred",
+                "details": {"original_error": str(exc)}
+            },
+            "status": "error"
+        }
+    )
 
 
 # Lazy-load router modules to avoid OOM crashes during import on memory-constrained environments
@@ -71,13 +118,18 @@ def root():
         "version": settings.APP_VERSION,
         "status": "running",
         "module": "Investigation & Evidence Intelligence + Resolution & Collaboration",
+        "features": [
+            "Module 1: Evidence Collection, Timeline Reconstruction, Evidence Validation, Policy Mapping",
+            "Module 2: Multi-Agent Reasoning Engine (Customer/Merchant Advocates, Fairness Decision)",
+            "Module 3: Resolution Dashboard, Smart Evidence Recommendations, Real-Time Re-Scoring"
+        ]
     }
 
 
 @app.get("/health")
 def health_check():
     """Health check endpoint for monitoring."""
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": settings.APP_VERSION}
 
 
 # Startup event
@@ -98,6 +150,7 @@ def on_startup():
     logger.info(f"{settings.APP_NAME} v{settings.APP_VERSION} is starting...")
     logger.info(f"Module: Investigation & Evidence Intelligence + Resolution & Collaboration")
     logger.info(f"Documentation: http://localhost:8000/docs")
+    logger.info("All three modules (Investigation, Reasoning, Resolution) are integrated")
 
 
 # Shutdown event
