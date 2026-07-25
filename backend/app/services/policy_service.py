@@ -31,8 +31,21 @@ class PolicyService:
         self.db = db
         self.policy_repo = PolicyRepositoryDB(db)
         self.agent = StrategyPolicyAgent(db)
-        self.policy_vector_store = PolicyVectorStore()
-        self.case_vector_store = HistoricalCaseVectorStore()
+        # Lazy initialization - only load when needed
+        self.policy_vector_store = None
+        self.case_vector_store = None
+
+    def _get_policy_vector_store(self):
+        """Lazy load policy vector store."""
+        if self.policy_vector_store is None:
+            self.policy_vector_store = PolicyVectorStore()
+        return self.policy_vector_store
+
+    def _get_case_vector_store(self):
+        """Lazy load case vector store."""
+        if self.case_vector_store is None:
+            self.case_vector_store = HistoricalCaseVectorStore()
+        return self.case_vector_store
 
     # --------------- Policy Mapping Orchestration ---------------
 
@@ -242,8 +255,8 @@ class PolicyService:
             Dict with policy and case vector store statistics.
         """
         return {
-            "policy_vector_store": self.policy_vector_store.get_collection_stats(),
-            "case_vector_store": self.case_vector_store.get_collection_stats(),
+            "policy_vector_store": self._get_policy_vector_store().get_collection_stats(),
+            "case_vector_store": self._get_case_vector_store().get_collection_stats(),
         }
 
     def search_policies_semantic(
@@ -265,11 +278,11 @@ class PolicyService:
         Returns:
             List of search result dicts.
         """
-        if not self.policy_vector_store.is_available():
+        if not self._get_policy_vector_store().is_available():
             logger.warning("Policy vector store not available")
             return []
 
-        search_results = self.policy_vector_store.search_policies(
+        search_results = self._get_policy_vector_store().search_policies(
             query=query,
             policy_type=policy_type,
             category=category,
@@ -304,11 +317,11 @@ class PolicyService:
         Returns:
             List of search result dicts.
         """
-        if not self.case_vector_store.is_available():
+        if not self._get_case_vector_store().is_available():
             logger.warning("Historical case vector store not available")
             return []
 
-        search_results = self.case_vector_store.search_similar_cases(
+        search_results = self._get_case_vector_store().search_similar_cases(
             query=query,
             reason=reason,
             n_results=n_results,
