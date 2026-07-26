@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  FileText, Clock, CheckCircle, AlertTriangle, Activity,
+  FileText, Clock, CheckCircle, Activity,
   BarChart3, TrendingUp, Users, ChevronRight, RefreshCw,
 } from 'lucide-react'
 import { listCaseFiles } from '../../services/caseApi'
@@ -26,7 +26,6 @@ export default function ResolutionDashboard() {
       const data = await listCaseFiles({ limit: 50 })
       const fileList = data.case_files || data || []
       setCases(fileList)
-      // Fetch resolution states for all cases (up to 20)
       const batch = fileList.slice(0, 20)
       const results = await Promise.allSettled(
         batch.map((cf) => getResolutionState(cf.dispute_id).then((s) => ({ ...s, _caseFile: cf })))
@@ -66,7 +65,9 @@ export default function ResolutionDashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Resolution Dashboard</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          Dashboard
+        </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
         </div>
@@ -83,157 +84,178 @@ export default function ResolutionDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Resolution Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Live summary across all investigated cases</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Dashboard
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+            Live summary across all investigated cases
+          </p>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh
+        <button onClick={load} className="diq-btn diq-btn-outline diq-btn-sm">
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh
         </button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <KPICard
-          icon={<FileText className="w-7 h-7 text-indigo-500" />}
+          icon={<FileText className="w-5 h-5" style={{ color: 'var(--color-navy-500)' }} />}
           title="Total Cases"
           value={total}
           subtitle={`${states.length} with resolution state`}
-          colorClass="border-indigo-200 bg-indigo-50"
+          accentColor="var(--color-navy-500)"
         />
         <KPICard
-          icon={<Clock className="w-7 h-7 text-yellow-500" />}
+          icon={<Clock className="w-5 h-5" style={{ color: 'var(--color-amber-600)' }} />}
           title="Pending Resolution"
           value={pending}
           subtitle="Awaiting investigator action"
-          colorClass="border-yellow-200 bg-yellow-50"
+          accentColor="var(--color-amber-500)"
         />
         <KPICard
-          icon={<CheckCircle className="w-7 h-7 text-green-500" />}
+          icon={<CheckCircle className="w-5 h-5" style={{ color: 'var(--color-green-600)' }} />}
           title="Decisions Made"
           value={completed}
           subtitle={`${readyForDecision} ready for decision`}
-          colorClass="border-green-200 bg-green-50"
+          accentColor="var(--color-green-600)"
         />
         <KPICard
-          icon={<Activity className="w-7 h-7 text-purple-500" />}
+          icon={<Activity className="w-5 h-5" style={{ color: 'var(--color-violet-600)' }} />}
           title="Avg Fairness Score"
           value={avgFairness != null ? `${avgFairness.toFixed(1)}%` : '—'}
           subtitle={`${module2Active} cases with AI reasoning`}
-          colorClass="border-purple-200 bg-purple-50"
+          accentColor="var(--color-violet-600)"
         />
       </div>
 
-      {/* Module 2 AI summary */}
+      {/* AI + Readiness + Status breakdown cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-indigo-500" /> AI Recommendation Breakdown
-          </h3>
-          {states.length === 0 ? (
-            <p className="text-xs text-gray-400">No data</p>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(
-                states.reduce((acc, s) => {
-                  const k = s.ai_recommendation || 'pending'
-                  acc[k] = (acc[k] || 0) + 1
-                  return acc
-                }, {})
-              ).map(([outcome, count]) => (
-                <div key={outcome} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">{formatOutcome(outcome)}</span>
-                  <span className="text-xs font-medium text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="diq-card">
+          <div className="diq-card-header">
+            <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-navy-500)' }} />
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              AI Recommendation Breakdown
+            </h3>
+          </div>
+          <div className="diq-card-body">
+            {states.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>No data</p>
+            ) : (
+              <div className="space-y-2">
+                {Object.entries(
+                  states.reduce((acc, s) => {
+                    const k = s.ai_recommendation || 'pending'
+                    acc[k] = (acc[k] || 0) + 1
+                    return acc
+                  }, {})
+                ).map(([outcome, count]) => (
+                  <div key={outcome} className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      {formatOutcome(outcome)}
+                    </span>
+                    <span className="diq-badge diq-badge-navy">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-indigo-500" /> Resolution Readiness
-          </h3>
-          {states.length === 0 ? (
-            <p className="text-xs text-gray-400">No data</p>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(
-                states.reduce((acc, s) => {
-                  const k = s.resolution_readiness || 'not_ready'
-                  acc[k] = (acc[k] || 0) + 1
-                  return acc
-                }, {})
-              ).map(([r, count]) => (
-                <div key={r} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">{formatReadiness(r)}</span>
-                  <span className="text-xs font-medium text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="diq-card">
+          <div className="diq-card-header">
+            <BarChart3 className="w-4 h-4" style={{ color: 'var(--color-navy-500)' }} />
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Resolution Readiness
+            </h3>
+          </div>
+          <div className="diq-card-body">
+            {states.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>No data</p>
+            ) : (
+              <div className="space-y-2">
+                {Object.entries(
+                  states.reduce((acc, s) => {
+                    const k = s.resolution_readiness || 'not_ready'
+                    acc[k] = (acc[k] || 0) + 1
+                    return acc
+                  }, {})
+                ).map(([r, count]) => (
+                  <div key={r} className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      {formatReadiness(r)}
+                    </span>
+                    <span className="diq-badge diq-badge-navy">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-500" /> Case File Status
-          </h3>
-          {cases.length === 0 ? (
-            <p className="text-xs text-gray-400">No data</p>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(
-                cases.reduce((acc, cf) => {
-                  acc[cf.status || 'draft'] = (acc[cf.status || 'draft'] || 0) + 1
-                  return acc
-                }, {})
-              ).map(([s, count]) => (
-                <div key={s} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600 capitalize">{s.replace('_', ' ')}</span>
-                  <span className="text-xs font-medium text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="diq-card">
+          <div className="diq-card-header">
+            <Users className="w-4 h-4" style={{ color: 'var(--color-navy-500)' }} />
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Case File Status
+            </h3>
+          </div>
+          <div className="diq-card-body">
+            {cases.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>No data</p>
+            ) : (
+              <div className="space-y-2">
+                {Object.entries(
+                  cases.reduce((acc, cf) => {
+                    acc[cf.status || 'draft'] = (acc[cf.status || 'draft'] || 0) + 1
+                    return acc
+                  }, {})
+                ).map(([s, count]) => (
+                  <div key={s} className="flex items-center justify-between">
+                    <span className="text-xs capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+                      {s.replace('_', ' ')}
+                    </span>
+                    <span className="diq-badge diq-badge-navy">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Recently Updated Cases */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-800">Recently Updated Cases</h3>
+      <div className="diq-card">
+        <div className="diq-card-header" style={{ justifyContent: 'space-between' }}>
+          <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+            Recently Updated Cases
+          </h3>
           <button
             onClick={() => navigate('/resolution/cases')}
-            className="text-sm text-indigo-600 hover:underline"
+            className="diq-btn diq-btn-ghost diq-btn-sm"
+            style={{ padding: '2px 8px' }}
           >
             View all →
           </button>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
           {recentCases.length === 0 ? (
-            <p className="text-sm text-gray-400 p-5">No cases available</p>
+            <p className="text-sm p-5" style={{ color: 'var(--color-text-muted)' }}>
+              No cases available
+            </p>
           ) : (
             recentCases.map((s) => (
               <div
                 key={s.case_id}
-                className="flex items-center justify-between px-5 py-3 hover:bg-indigo-50 cursor-pointer transition-colors"
+                className="diq-row-hover flex items-center justify-between px-5 py-3"
                 onClick={() => navigate(`/resolution/${s.case_id}`)}
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-gray-400" />
+                  <FileText className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                       {s.dispute_external_id || `Case #${s.case_id}`}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                       {formatReadiness(s.resolution_readiness)} · Updated {formatDate(s.last_updated)}
                     </p>
                   </div>
@@ -247,7 +269,7 @@ export default function ResolutionDashboard() {
                       <ScoreBar score={s.fairness_score} height="h-1" />
                     </div>
                   )}
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                 </div>
               </div>
             ))

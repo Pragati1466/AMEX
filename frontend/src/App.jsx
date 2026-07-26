@@ -5,15 +5,17 @@ import {
   Route,
   Link,
   Navigate,
+  useLocation,
 } from 'react-router-dom'
 import {
-  Shield, LogOut, BarChart3, FileText, Scale,
+  Shield, LogOut, BarChart3, FileText, Scale, Activity,
 } from 'lucide-react'
 import axios from 'axios'
 
 // ── Module 3 pages & components ──────────────────────────────────────────────
 import ResolutionDashboard from './pages/resolution/ResolutionDashboard'
 import ResolutionCaseList from './pages/resolution/ResolutionCaseList'
+import ResolutionOverview from './pages/resolution/ResolutionOverview'
 import CaseWorkspace from './pages/resolution/CaseWorkspace'
 import CaseOverview from './components/resolution/CaseOverview'
 import LiveFairnessDashboard from './components/resolution/LiveFairnessDashboard'
@@ -27,6 +29,38 @@ import AuditLogs from './components/resolution/AuditLogs'
 
 const API_BASE =
   import.meta.env.VITE_API_URL || 'https://disputiq-api.onrender.com/api/v1'
+
+// ── NavLink component ─────────────────────────────────────────────────────────
+function NavItem({ to, icon: Icon, label }) {
+  const location = useLocation()
+  const path = location.pathname
+
+  let isActive
+  if (to === '/dashboard') {
+    isActive = path === '/dashboard'
+  } else if (to === '/resolution/cases') {
+    // Cases tab: active on /resolution/cases only
+    isActive = path === '/resolution/cases'
+  } else if (to === '/resolution') {
+    // Resolution tab: active on /resolution and any /resolution/:caseId/... workspace
+    // but NOT on /resolution/cases
+    isActive =
+      path === '/resolution' ||
+      (path.startsWith('/resolution/') && path !== '/resolution/cases')
+  } else {
+    isActive = path === to || path.startsWith(to + '/')
+  }
+
+  return (
+    <Link
+      to={to}
+      className={`diq-nav-link ${isActive ? 'active' : ''}`}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </Link>
+  )
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 function App() {
@@ -86,70 +120,123 @@ function App() {
   // ── Login Screen ─────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <Shield className="w-16 h-16 mx-auto mb-4 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-800">DisputeIQ</h1>
-            <p className="text-gray-600 mt-2">AI-Powered Dispute Resolution</p>
+      <div className="min-h-screen flex" style={{ background: 'var(--color-navy-950)' }}>
+        {/* Left branding panel */}
+        <div className="hidden lg:flex flex-col justify-between w-[420px] flex-shrink-0 p-10"
+          style={{ background: 'linear-gradient(160deg, var(--color-navy-900) 0%, var(--color-navy-800) 100%)' }}>
+          <div>
+            <div className="flex items-center gap-3 mb-12">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--color-navy-600)' }}>
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="text-white font-bold text-xl tracking-tight">DisputeIQ</div>
+                <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Resolution Platform</div>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-white leading-tight mb-4">
+              AI-Powered Dispute<br/>Resolution
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Before deciding who is right, we make sure both sides had a fair chance to prove it.
+            </p>
+            <div className="mt-10 space-y-4">
+              {[
+                { icon: '⚖️', title: 'Fairness-First', desc: 'Equal representation for all parties' },
+                { icon: '🤖', title: 'Explainable AI', desc: 'Transparent reasoning at every step' },
+                { icon: '👤', title: 'Human-in-the-Loop', desc: 'Investigators always make final calls' },
+              ].map((item) => (
+                <div key={item.title} className="flex items-start gap-3">
+                  <span className="text-lg">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-semibold text-white">{item.title}</div>
+                    <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Enter your username"
-                required
-              />
+          <div className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Module 3 — Resolution & Collaboration
+          </div>
+        </div>
+
+        {/* Right login panel */}
+        <div className="flex-1 flex items-center justify-center p-6"
+          style={{ background: 'var(--color-surface-app)' }}>
+          <div className="w-full max-w-sm">
+            {/* Mobile logo */}
+            <div className="lg:hidden flex items-center gap-3 mb-8">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--color-navy-800)' }}>
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-lg" style={{ color: 'var(--color-navy-900)' }}>DisputeIQ</div>
+                <div className="text-xs text-gray-400">Resolution Platform</div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
-            >
-              Sign In
-            </button>
-          </form>
-          <div className="mt-6 text-center">
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <span
-                className={`w-3 h-3 rounded-full ${
-                  apiStatus === 'online'
-                    ? 'bg-green-500'
-                    : apiStatus === 'loading'
-                    ? 'bg-yellow-500'
-                    : 'bg-red-500'
-                }`}
-              />
-              <span className="text-gray-600">
-                API:{' '}
-                {apiStatus === 'online'
-                  ? 'Connected'
-                  : apiStatus === 'loading'
-                  ? 'Checking...'
-                  : 'Disconnected'}
-              </span>
-            </div>
-            {responseTime && (
-              <p className="text-xs text-gray-500 mt-1">
-                Response time: {responseTime}ms
+
+            <div className="mb-7">
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Sign in
+              </h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                Access the Resolution Dashboard
               </p>
-            )}
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                  style={{ color: 'var(--color-text-secondary)' }}>
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  className="diq-input"
+                  placeholder="Enter your username"
+                  required
+                  autoComplete="username"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                  style={{ color: 'var(--color-text-secondary)' }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  className="diq-input"
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+              <button
+                type="submit"
+                className="diq-btn diq-btn-primary w-full py-2.5 text-sm font-semibold mt-2"
+                style={{ borderRadius: 'var(--radius-md)' }}
+              >
+                Sign In to DisputeIQ
+              </button>
+            </form>
+
+            {/* API status */}
+            <div className="mt-6 flex items-center justify-between text-xs"
+              style={{ color: 'var(--color-text-muted)' }}>
+              <div className="flex items-center gap-2">
+                <span className={`inline-block w-2 h-2 rounded-full ${
+                  apiStatus === 'online' ? 'bg-green-500' :
+                  apiStatus === 'loading' ? 'bg-amber-400' : 'bg-red-500'
+                }`} />
+                API {apiStatus === 'online' ? 'Connected' : apiStatus === 'loading' ? 'Checking…' : 'Disconnected'}
+              </div>
+              {responseTime && <span>{responseTime}ms</span>}
+            </div>
           </div>
         </div>
       </div>
@@ -159,48 +246,45 @@ function App() {
   // ── Authenticated App ─────────────────────────────────────────────────────
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen" style={{ background: 'var(--color-surface-app)' }}>
         {/* Navigation */}
-        <nav className="bg-white shadow-lg">
+        <nav className="diq-nav">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center gap-2">
-                <Shield className="w-8 h-8 text-indigo-600" />
-                <span className="text-xl font-bold text-gray-800">DisputeIQ</span>
+            <div className="flex items-center justify-between h-14 gap-4">
+              {/* Brand */}
+              <div className="flex items-center gap-2.5 flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.12)' }}>
+                  <Shield className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-white text-base tracking-tight">DisputeIQ</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-2 rounded-lg flex items-center gap-1 text-sm"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  to="/resolution/cases"
-                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-2 rounded-lg flex items-center gap-1 text-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  Cases
-                </Link>
-                <Link
-                  to="/resolution"
-                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-2 rounded-lg flex items-center gap-1 text-sm"
-                >
-                  <Scale className="w-4 h-4" />
-                  Resolution
-                </Link>
+
+              {/* Nav links */}
+              <div className="flex items-center gap-0.5 flex-1">
+                <NavItem to="/dashboard" icon={BarChart3} label="Dashboard" />
+                <NavItem to="/resolution/cases" icon={FileText} label="Cases" />
+                <NavItem to="/resolution" icon={Scale} label="Resolution" />
+              </div>
+
+              {/* Right */}
+              <div className="flex items-center gap-2">
                 {user && (
-                  <span className="text-xs text-gray-400 px-2 hidden sm:block">
-                    {user.username}
-                  </span>
+                  <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md"
+                    style={{ background: 'rgba(255,255,255,0.07)' }}>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: 'var(--color-navy-500)' }}>
+                      {user.username?.[0]?.toUpperCase()}
+                    </div>
+                    <span className="text-xs text-white/70 font-medium">{user.username}</span>
+                  </div>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="text-gray-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-1 text-sm"
+                  className="diq-nav-link hover:text-red-400 hover:bg-red-500/10"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Logout
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
             </div>
@@ -213,13 +297,14 @@ function App() {
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Resolution Dashboard (replaces old mock Dashboard) */}
+            {/* Dashboard — high-level overview */}
             <Route path="/dashboard" element={<ResolutionDashboard />} />
 
-            {/* Resolution Case List (replaces old mock Cases) */}
-            <Route path="/cases" element={<ResolutionCaseList />} />
-            <Route path="/resolution" element={<ResolutionDashboard />} />
+            {/* Cases — dedicated case browser */}
             <Route path="/resolution/cases" element={<ResolutionCaseList />} />
+
+            {/* Resolution — resolution workflow queue (actionable overview) */}
+            <Route path="/resolution" element={<ResolutionOverview />} />
 
             {/* Case Workspace with nested tabs */}
             <Route path="/resolution/:caseId" element={<CaseWorkspace />}>

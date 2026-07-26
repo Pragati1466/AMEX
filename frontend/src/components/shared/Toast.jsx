@@ -1,11 +1,31 @@
 import { useEffect } from 'react'
 import { CheckCircle, AlertTriangle, XCircle, Info, X } from 'lucide-react'
 
-const ICONS = {
-  success: <CheckCircle className="w-5 h-5 text-green-500" />,
-  error: <XCircle className="w-5 h-5 text-red-500" />,
-  warning: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-  info: <Info className="w-5 h-5 text-blue-500" />,
+const TYPE_CONFIG = {
+  success: {
+    icon: CheckCircle,
+    iconColor: 'var(--color-green-600)',
+    borderColor: '#bbf7d0',
+    bg: 'var(--color-green-50)',
+  },
+  error: {
+    icon: XCircle,
+    iconColor: 'var(--color-red-600)',
+    borderColor: '#fecaca',
+    bg: 'var(--color-red-50)',
+  },
+  warning: {
+    icon: AlertTriangle,
+    iconColor: 'var(--color-amber-600)',
+    borderColor: '#fde68a',
+    bg: 'var(--color-amber-50)',
+  },
+  info: {
+    icon: Info,
+    iconColor: 'var(--color-navy-600)',
+    borderColor: '#a8c0ea',
+    bg: 'var(--color-navy-50)',
+  },
 }
 
 export default function Toast({ id, type = 'info', message, onDismiss, duration = 4000 }) {
@@ -14,12 +34,30 @@ export default function Toast({ id, type = 'info', message, onDismiss, duration 
     return () => clearTimeout(t)
   }, [id, duration, onDismiss])
 
+  const config = TYPE_CONFIG[type] || TYPE_CONFIG.info
+  const IconComp = config.icon
+
   return (
-    <div className="flex items-start gap-3 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 min-w-64 max-w-sm">
-      <div className="flex-shrink-0 mt-0.5">{ICONS[type]}</div>
-      <p className="text-sm text-gray-700 flex-1">{message}</p>
-      <button onClick={() => onDismiss(id)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
-        <X className="w-4 h-4" />
+    <div
+      className="diq-toast flex items-start gap-3 rounded-xl px-4 py-3 min-w-64 max-w-sm"
+      style={{
+        background: config.bg,
+        border: `1px solid ${config.borderColor}`,
+        boxShadow: 'var(--shadow-lg)',
+      }}
+    >
+      <div className="flex-shrink-0 mt-0.5">
+        <IconComp className="w-4 h-4" style={{ color: config.iconColor }} />
+      </div>
+      <p className="text-sm flex-1 leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+        {message}
+      </p>
+      <button
+        onClick={() => onDismiss(id)}
+        className="flex-shrink-0 transition-opacity hover:opacity-70"
+        style={{ color: 'var(--color-text-muted)' }}
+      >
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   )
@@ -28,7 +66,7 @@ export default function Toast({ id, type = 'info', message, onDismiss, duration 
 export function ToastContainer({ toasts, onDismiss }) {
   if (!toasts.length) return null
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
+    <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2">
       {toasts.map((t) => (
         <Toast key={t.id} {...t} onDismiss={onDismiss} />
       ))}

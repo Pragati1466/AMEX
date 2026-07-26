@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Filter, RefreshCw, ChevronRight, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Search, Filter, RefreshCw, ChevronRight, FileText } from 'lucide-react'
 import { listCaseFiles } from '../../services/caseApi'
 import { getResolutionState } from '../../services/resolutionApi'
 import StatusBadge from '../../components/shared/StatusBadge'
@@ -23,6 +23,13 @@ const STATUS_OPTIONS = [
   { label: 'Submitted', value: 'submitted' },
 ]
 
+const CASE_FILE_BADGE = {
+  draft:     'diq-badge-gray',
+  complete:  'diq-badge-blue',
+  submitted: 'diq-badge-green',
+  archived:  'diq-badge-violet',
+}
+
 export default function ResolutionCaseList() {
   const navigate = useNavigate()
   const [cases, setCases] = useState([])
@@ -41,7 +48,6 @@ export default function ResolutionCaseList() {
       const data = await listCaseFiles({ limit: 100, offset: 0, status: statusFilter || undefined })
       const fileList = data.case_files || data || []
       setCases(fileList)
-      // Fetch resolution state for each case in parallel (up to 20 at a time)
       const batch = fileList.slice(0, 20)
       const stateResults = await Promise.allSettled(
         batch.map((cf) =>
@@ -94,7 +100,9 @@ export default function ResolutionCaseList() {
 
   const SortIcon = ({ field }) =>
     sortField !== field ? null : (
-      <span className="ml-1 text-indigo-600">{sortDir === 'asc' ? '▲' : '▼'}</span>
+      <span className="ml-1" style={{ color: 'var(--color-navy-500)' }}>
+        {sortDir === 'asc' ? '▲' : '▼'}
+      </span>
     )
 
   return (
@@ -102,37 +110,38 @@ export default function ResolutionCaseList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Resolution Cases</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Resolution Cases
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
             {loading ? 'Loading…' : `${filtered.length} case${filtered.length !== 1 ? 's' : ''} found`}
           </p>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh
+        <button onClick={load} className="diq-btn diq-btn-outline diq-btn-sm">
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
           <input
             type="text"
             placeholder="Search by Case ID or Dispute ID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="diq-input"
+            style={{ paddingLeft: '36px' }}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
+          <Filter className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-indigo-500"
+            className="diq-input diq-select"
+            style={{ width: 'auto', minWidth: '130px' }}
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -143,79 +152,103 @@ export default function ResolutionCaseList() {
 
       {/* Table */}
       {loading ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="diq-card diq-card-body">
           <LoadingSkeleton rows={6} />
         </div>
       ) : error ? (
         <ErrorState message={error} onRetry={load} />
       ) : filtered.length === 0 ? (
-        <EmptyState message="No cases found. Adjust filters or create a new investigation." />
+        <EmptyState
+          message="No cases found. Adjust filters or create a new investigation."
+          icon={<FileText className="w-6 h-6" style={{ color: 'var(--color-text-muted)' }} />}
+        />
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+        <div className="diq-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
+            <table className="min-w-full">
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-muted)' }}>
                   <th
-                    className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
                     onClick={() => toggleSort('case_file_id')}
                   >
                     Case ID <SortIcon field="case_file_id" />
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resolution</th>
                   <th
-                    className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
+                  >
+                    Status
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
+                  >
+                    Resolution
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
                     onClick={() => toggleSort('fairness_score')}
                   >
                     Fairness <SortIcon field="fairness_score" />
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Recommendation</th>
                   <th
-                    className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
+                  >
+                    AI Recommendation
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none"
+                    style={{ color: 'var(--color-text-muted)', letterSpacing: '0.07em' }}
                     onClick={() => toggleSort('created_at')}
                   >
                     Created <SortIcon field="created_at" />
                   </th>
-                  <th className="px-5 py-3" />
+                  <th className="px-5 py-3 w-10" />
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {filtered.map((cf) => {
+              <tbody>
+                {filtered.map((cf, idx) => {
                   const state = stateMap[cf.dispute_id]
                   return (
                     <tr
                       key={cf.id}
-                      className="hover:bg-indigo-50 cursor-pointer transition-colors"
+                      className="diq-row-hover"
+                      style={{
+                        borderBottom: idx < filtered.length - 1 ? '1px solid var(--color-border)' : 'none',
+                      }}
                       onClick={() => navigate(`/resolution/${cf.dispute_id}`)}
                     >
-                      <td className="px-5 py-4">
-                        <div className="font-mono text-sm font-medium text-gray-900">
+                      <td className="px-5 py-3.5">
+                        <div
+                          className="font-mono text-sm font-semibold"
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
                           {cf.case_file_id}
                         </div>
-                        <div className="text-xs text-gray-400">Dispute #{cf.dispute_id}</div>
+                        <div className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                          Dispute #{cf.dispute_id}
+                        </div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <StatusBadge
                           label={cf.status?.replace('_', ' ').toUpperCase() || 'DRAFT'}
-                          colorClass={{
-                            draft: 'bg-gray-100 text-gray-600',
-                            complete: 'bg-blue-100 text-blue-700',
-                            submitted: 'bg-green-100 text-green-700',
-                            archived: 'bg-purple-100 text-purple-700',
-                          }[cf.status] || 'bg-gray-100 text-gray-600'}
+                          colorClass={CASE_FILE_BADGE[cf.status] || 'diq-badge-gray'}
                         />
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         {state ? (
-                          <span className="text-xs text-gray-600">
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                             {formatReadiness(state.resolution_readiness)}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>—</span>
                         )}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         {state?.fairness_score != null ? (
                           <div className="space-y-1 w-28">
                             <div className={`text-sm font-medium ${scoreColor(state.fairness_score)}`}>
@@ -224,23 +257,23 @@ export default function ResolutionCaseList() {
                             <ScoreBar score={state.fairness_score} />
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>—</span>
                         )}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         {state?.ai_recommendation ? (
-                          <span className="text-xs text-gray-700">
+                          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                             {formatOutcome(state.ai_recommendation)}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">Pending</span>
+                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Pending</span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-xs text-gray-500">
+                      <td className="px-5 py-3.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                         {formatDate(cf.created_at)}
                       </td>
-                      <td className="px-5 py-4">
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <td className="px-5 py-3.5">
+                        <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                       </td>
                     </tr>
                   )

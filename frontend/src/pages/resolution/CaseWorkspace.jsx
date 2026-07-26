@@ -86,7 +86,6 @@ export default function CaseWorkspace() {
         load()
         break
       case 'error':
-        // WebSocket error - silently ignore for UX
         break
       default:
         break
@@ -99,10 +98,10 @@ export default function CaseWorkspace() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
-          <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+          <ArrowLeft className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />
+          <div className="diq-skeleton rounded" style={{ height: '24px', width: '200px' }} />
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="diq-card diq-card-body">
           <LoadingSkeleton rows={5} />
         </div>
       </div>
@@ -120,90 +119,98 @@ export default function CaseWorkspace() {
   return (
     <div className="space-y-0">
       {/* Top: back + case header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/resolution/cases')}
-              className="text-gray-500 hover:text-indigo-600 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">
-                {header.dispute_external_id || `Case #${caseId}`}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-gray-500">
-                {header.dispute_reason && (
-                  <span className="capitalize">
-                    {String(header.dispute_reason).replace(/_/g, ' ')}
-                  </span>
-                )}
-                {header.amount && (
-                  <span className="font-medium text-gray-700">
-                    {header.currency || 'USD'} {Number(header.amount).toLocaleString()}
-                  </span>
-                )}
-                {readiness && (
-                  <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
-                    {formatReadiness(readiness)}
-                  </span>
-                )}
-                {hasFinalDecision && (
-                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                    Decision Recorded
-                  </span>
-                )}
+      <div
+        className="diq-card"
+        style={{ borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', borderBottom: 'none' }}
+      >
+        <div className="px-5 py-3">
+          <div className="flex items-start justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/resolution/cases')}
+                className="diq-btn diq-btn-ghost diq-btn-sm"
+                style={{ padding: '4px 6px', color: 'var(--color-text-secondary)' }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div>
+                <h1 className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  {header.dispute_external_id || `Case #${caseId}`}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  {header.dispute_reason && (
+                    <span className="text-xs capitalize" style={{ color: 'var(--color-text-muted)' }}>
+                      {String(header.dispute_reason).replace(/_/g, ' ')}
+                    </span>
+                  )}
+                  {header.amount && (
+                    <span className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                      {header.currency || 'USD'} {Number(header.amount).toLocaleString()}
+                    </span>
+                  )}
+                  {readiness && (
+                    <span className="diq-badge diq-badge-navy">
+                      {formatReadiness(readiness)}
+                    </span>
+                  )}
+                  {hasFinalDecision && (
+                    <span className="diq-badge diq-badge-green">Decision Recorded</span>
+                  )}
+                </div>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={load}
+                className="diq-btn diq-btn-outline diq-btn-sm"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </button>
+              <button
+                onClick={() => navigate(`/resolution/${caseId}/notifications`)}
+                className="diq-btn diq-btn-outline diq-btn-sm relative"
+                style={{ padding: '6px 8px' }}
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span
+                    className="absolute -top-1.5 -right-1.5 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                    style={{ background: 'var(--color-red-600)', fontSize: '9px' }}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={load}
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh
-            </button>
-            <button
-              onClick={() => navigate(`/resolution/${caseId}/notifications`)}
-              className="relative text-gray-500 hover:text-indigo-600"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
 
-        {/* Tab navigation */}
-        <nav className="flex gap-0.5 mt-3 overflow-x-auto">
-          {TABS.map(({ label, path, icon: Icon }) => (
-            <NavLink
-              key={path}
-              to={`/resolution/${caseId}/${path}`}
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 whitespace-nowrap transition-colors ${
-                  isActive
-                    ? 'border-indigo-600 text-indigo-700 bg-indigo-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`
-              }
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-              {path === 'decision' && hasFinalDecision && (
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-              )}
-            </NavLink>
-          ))}
-        </nav>
+          {/* Tab navigation */}
+          <nav
+            className="flex gap-0.5 mt-3 overflow-x-auto pb-0"
+            style={{ borderBottom: '2px solid var(--color-border)' }}
+          >
+            {TABS.map(({ label, path, icon: Icon }) => (
+              <NavLink
+                key={path}
+                to={`/resolution/${caseId}/${path}`}
+                className={({ isActive }) => `diq-tab ${isActive ? 'active' : ''}`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+                {path === 'decision' && hasFinalDecision && (
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: 'var(--color-green-500)' }}
+                  />
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Routed child components receive dashboard as context */}
-      <div className="mt-4 px-0">
+      <div className="mt-4">
         <Outlet context={{ dashboard, caseId: Number(caseId), reload: load }} />
       </div>
 

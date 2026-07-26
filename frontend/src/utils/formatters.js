@@ -50,6 +50,14 @@ export function scoreBgColor(score) {
   return 'bg-red-500'
 }
 
+/** Return custom CSS fill class for ScoreBar (matches diq-score-fill-* in index.css) */
+export function scoreFillClass(score) {
+  if (score == null) return 'diq-score-fill-amber'
+  if (score >= 70) return 'diq-score-fill-green'
+  if (score >= 40) return 'diq-score-fill-amber'
+  return 'diq-score-fill-red'
+}
+
 /** Priority badge colors */
 export function priorityColor(priority) {
   const map = {
