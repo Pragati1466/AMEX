@@ -427,9 +427,9 @@ class ResolutionService:
             "case_id": dispute.id,
             "dispute_external_id": dispute.dispute_id,
             "generated_at": datetime.datetime.utcnow().isoformat(),
-            "dashboard_summary": dashboard.model_dump() if dashboard else {},
-            "recommendation": recommendation.model_dump() if recommendation else {},
-            "final_decision": FinalDecisionView.model_validate(final_decision).model_dump() if final_decision else None,
+            "dashboard_summary": dashboard.model_dump(mode="json") if dashboard else {},
+            "recommendation": recommendation.model_dump(mode="json") if recommendation else {},
+            "final_decision": FinalDecisionView.model_validate(final_decision).model_dump(mode="json") if final_decision else None,
             "rescoring_history_count": len(history),
         }
 

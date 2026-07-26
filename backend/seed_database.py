@@ -140,7 +140,7 @@ def seed_database():
             merchant_id=merchant.id,
             transaction_id=transaction2.id,
             order_id=order.id,
-            reason=DisputeReason.UNAUTHORIZED_CHARGE,
+            reason=DisputeReason.UNAUTHORIZED,
             description="Customer claims unauthorized charge on credit card",
             amount=299.99,
             currency="USD",
