@@ -47,3 +47,5 @@ service:
       value: ""
     - key: CLOUDINARY_API_SECRET
       value: ""
+    - key: AUTO_SEED_DATABASE
+      value: "true"

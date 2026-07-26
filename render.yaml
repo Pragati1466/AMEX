@@ -43,3 +43,5 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: AUTO_SEED_DATABASE
+        value: "true"

@@ -132,15 +132,56 @@ def health_check():
     return {"status": "healthy", "version": settings.APP_VERSION}
 
 
+@app.post("/admin/seed-database")
+def seed_database_endpoint():
+    """Manual endpoint to seed database with sample data."""
+    try:
+        from app.core.database import get_db
+        db = next(get_db())
+        try:
+            seed_sample_data(db)
+            return {
+                "status": "success",
+                "message": "Sample data seeded successfully",
+                "details": "Created 2 customers, 1 merchant, 2 transactions, 1 order, 2 disputes"
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Manual seed failed: {e}")
+        return {
+            "status": "error",
+            "message": f"Seeding failed: {str(e)}"
+        }
+
+
 # Startup event
 @app.on_event("startup")
 def on_startup():
-    """Initialize database tables and log startup."""
+    """Initialize database tables, seed sample data, and log startup."""
     try:
         # Create all tables (works with both SQLite and PostgreSQL)
         logger.info(f"Connecting to database: {settings.DATABASE_URL[:30]}...")
         Base.metadata.create_all(bind=engine)
         logger.info(f"Database tables created/verified successfully")
+        
+        # Seed sample data if database is empty
+        from app.core.database import get_db
+        from app.models.existing import Customer, Dispute
+        
+        db = next(get_db())
+        try:
+            # Check if database is empty
+            customer_count = db.query(Customer).count()
+            if customer_count == 0:
+                logger.info("Database is empty. Seeding sample data...")
+                seed_sample_data(db)
+                logger.info("Sample data seeded successfully!")
+            else:
+                logger.info(f"Database already contains {customer_count} customers. Skipping seed.")
+        finally:
+            db.close()
+            
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         logger.error(f"DATABASE_URL used: {settings.DATABASE_URL}")
@@ -151,6 +192,116 @@ def on_startup():
     logger.info(f"Module: Investigation & Evidence Intelligence + Resolution & Collaboration")
     logger.info(f"Documentation: http://localhost:8000/docs")
     logger.info("All three modules (Investigation, Reasoning, Resolution) are integrated")
+
+
+def seed_sample_data(db):
+    """Seed database with sample data for testing."""
+    from app.models.existing import Customer, Merchant, Transaction, Order, Dispute, DisputeReason
+    
+    # Create Customer
+    customer = Customer(
+        customer_id="CUST001",
+        first_name="John",
+        last_name="Doe",
+        email="john.doe@example.com",
+        is_verified=True
+    )
+    db.add(customer)
+    db.flush()
+    
+    # Create Merchant
+    merchant = Merchant(
+        merchant_id="MCH001",
+        business_name="Test Merchant",
+        email="merchant@example.com",
+        is_active=True
+    )
+    db.add(merchant)
+    db.flush()
+    
+    # Create Transaction
+    transaction = Transaction(
+        transaction_id="TXN001",
+        customer_id=customer.id,
+        merchant_id=merchant.id,
+        transaction_type="sale",
+        amount=100.00,
+        currency="USD",
+        transaction_date="2026-01-15T10:00:00",
+        is_disputed=True
+    )
+    db.add(transaction)
+    db.flush()
+    
+    # Create Order
+    order = Order(
+        order_id="ORD001",
+        customer_id=customer.id,
+        merchant_id=merchant.id,
+        order_date="2026-01-15T10:00:00",
+        status="shipped",
+        total_amount=100.00,
+        currency="USD"
+    )
+    db.add(order)
+    db.flush()
+    
+    # Create Dispute
+    dispute = Dispute(
+        dispute_id="DSP001",
+        customer_id=customer.id,
+        merchant_id=merchant.id,
+        transaction_id=transaction.id,
+        order_id=order.id,
+        reason=DisputeReason.PRODUCT_NOT_RECEIVED,
+        description="Customer claims product not received",
+        amount=100.00,
+        currency="USD",
+        filed_at="2026-01-20T10:00:00"
+    )
+    db.add(dispute)
+    db.flush()
+    
+    # Create second sample
+    customer2 = Customer(
+        customer_id="CUST002",
+        first_name="Jane",
+        last_name="Smith",
+        email="jane.smith@example.com",
+        is_verified=True
+    )
+    db.add(customer2)
+    db.flush()
+    
+    transaction2 = Transaction(
+        transaction_id="TXN002",
+        customer_id=customer2.id,
+        merchant_id=merchant.id,
+        transaction_type="sale",
+        amount=299.99,
+        currency="USD",
+        transaction_date="2026-06-15T14:30:00",
+        is_disputed=True
+    )
+    db.add(transaction2)
+    db.flush()
+    
+    dispute2 = Dispute(
+        dispute_id="DSP002",
+        customer_id=customer2.id,
+        merchant_id=merchant.id,
+        transaction_id=transaction2.id,
+        order_id=order.id,
+        reason=DisputeReason.UNAUTHORIZED_CHARGE,
+        description="Customer claims unauthorized charge on credit card",
+        amount=299.99,
+        currency="USD",
+        filed_at="2026-06-20T09:15:00"
+    )
+    db.add(dispute2)
+    
+    db.commit()
+    logger.info("Sample data created: 2 customers, 1 merchant, 2 transactions, 1 order, 2 disputes")
 
 
 # Shutdown event
