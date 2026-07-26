@@ -12,11 +12,7 @@
   ],
   "routes": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/((?!.*\\.[a-zA-Z0-9]{2,5}$).*)",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
@@ -24,3 +20,4 @@
     "VITE_API_URL": "https://disputiq-backend.onrender.com"
   }
 }
+
