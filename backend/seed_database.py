@@ -5,6 +5,7 @@ Run this script to populate your database with test data.
 
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add backend directory to Python path
 backend_dir = Path(__file__).parent
@@ -68,7 +69,7 @@ def seed_database():
             transaction_type="sale",
             amount=100.00,
             currency="USD",
-            transaction_date="2026-01-15T10:00:00",
+            transaction_date=datetime(2026, 1, 15, 10, 0, 0),
             is_disputed=True
         )
         db.add(transaction)
@@ -81,7 +82,7 @@ def seed_database():
             order_id="ORD001",
             customer_id=customer.id,
             merchant_id=merchant.id,
-            order_date="2026-01-15T10:00:00",
+            order_date=datetime(2026, 1, 15, 10, 0, 0),
             status="shipped",
             total_amount=100.00,
             currency="USD"
@@ -102,7 +103,7 @@ def seed_database():
             description="Customer claims product not received",
             amount=100.00,
             currency="USD",
-            filed_at="2026-01-20T10:00:00"
+            filed_at=datetime(2026, 1, 20, 10, 0, 0)
         )
         db.add(dispute)
         db.flush()
@@ -127,7 +128,7 @@ def seed_database():
             transaction_type="sale",
             amount=299.99,
             currency="USD",
-            transaction_date="2026-06-15T14:30:00",
+            transaction_date=datetime(2026, 6, 15, 14, 30, 0),
             is_disputed=True
         )
         db.add(transaction2)
@@ -143,7 +144,7 @@ def seed_database():
             description="Customer claims unauthorized charge on credit card",
             amount=299.99,
             currency="USD",
-            filed_at="2026-06-20T09:15:00"
+            filed_at=datetime(2026, 6, 20, 9, 15, 0)
         )
         db.add(dispute2)
         db.flush()
