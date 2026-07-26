@@ -32,13 +32,13 @@ builder = StateGraph(DisputeState)
 
 builder.add_node("customer_advocate", customer_node)
 builder.add_node("merchant_advocate", merchant_node)
-builder.add_node("fairness_decision", fairness_node)
+builder.add_node("fairness_node", fairness_node)
 builder.add_node("explainability", explainability_node)
 
 builder.set_entry_point("customer_advocate")
 builder.add_edge("customer_advocate", "merchant_advocate")
-builder.add_edge("merchant_advocate", "fairness_decision")
-builder.add_edge("fairness_decision", "explainability")
+builder.add_edge("merchant_advocate", "fairness_node")
+builder.add_edge("fairness_node", "explainability")
 builder.add_edge("explainability", END)
 
 dispute_graph = builder.compile()
