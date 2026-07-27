@@ -219,36 +219,6 @@ pytest
 
 ---
 
-## 📁 Project Structure
-
-```text
-AMEX-real-fork/
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── investigator/         # Dashboard, intake, case workspace
-│   │   │   └── resolution/           # Resolution dashboard and workspace
-│   │   ├── components/
-│   │   │   ├── investigator/         # Evidence, timeline, policy components
-│   │   │   ├── resolution/           # Fairness, scoring, reports, audit components
-│   │   │   └── shared/               # Reusable UI primitives
-│   │   ├── services/                 # Axios API services
-│   │   └── App.jsx                   # Shared application shell and routing
-│   └── package.json
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/                   # FastAPI route modules
-│   │   ├── agents/                   # Investigation and resolution agents
-│   │   ├── services/                 # Business logic
-│   │   ├── models/                   # SQLAlchemy models
-│   │   └── schemas/                  # Pydantic schemas
-│   ├── alembic/                      # Database migrations
-│   └── requirements.txt
-└── docs/screenshots/                 # README preview images
-```
-
----
-
 ## 🔌 API Highlights
 
 The backend serves versioned routes under `/api/v1`:
