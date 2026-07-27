@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Users, BarChart3, AlertCircle, Gauge,
   ArrowUpRight, ArrowDownRight, Shield, Target, BrainCircuit,
   ChevronLeft, X, SlidersHorizontal, Download, Eye,
-  SortAsc, SortDesc, Calendar,
+  SortAsc, SortDesc, Calendar, FileSpreadsheet, Printer,
+  Archive, Trash2,
 } from 'lucide-react'
 import { getInvestigatorDashboard, searchCases } from '../../services/investigatorApi'
 import IconBox from '../../components/shared/IconBox'
@@ -95,7 +96,21 @@ function CaseTable({ cases, onCaseClick }) {
   const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(new Set())
+  const [exportOpen, setExportOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(null)
+  const menuRef = useRef(null)
   const pageSize = 8
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -108,6 +123,99 @@ function CaseTable({ cases, onCaseClick }) {
 
   const toggleSelect = (id) => setSelected(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
   const toggleAll = () => setSelected(p => p.size === paged.length ? new Set() : new Set(paged.map(c => c.id)))
+
+  const handleExport = (format) => {
+    const dataToExport = selected.size > 0 ? cases.filter(c => selected.has(c.id)) : cases
+    
+    if (format === 'csv') {
+      const headers = ['Case ID', 'Customer', 'Merchant', 'Type', 'Status', 'Priority', 'Confidence', 'Evidence', 'Updated']
+      const rows = dataToExport.map(c => [
+        c.case_id, c.customer_name, c.merchant_name, c.dispute_type, c.status, c.priority, 
+        `${c.confidence}%`, `${c.evidence_completion}%`, c.updated_date
+      ])
+      const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `cases_export_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } else if (format === 'excel') {
+      // Simple Excel export using CSV format with .xlsx extension
+      const headers = ['Case ID', 'Customer', 'Merchant', 'Type', 'Status', 'Priority', 'Confidence', 'Evidence', 'Updated']
+      const rows = dataToExport.map(c => [
+        c.case_id, c.customer_name, c.merchant_name, c.dispute_type, c.status, c.priority, 
+        `${c.confidence}%`, `${c.evidence_completion}%`, c.updated_date
+      ])
+      const csvContent = [headers, ...rows].map(row => row.join('\t')).join('\n')
+      const blob = new Blob([csvContent], { type: 'text/tab-separated-values' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `cases_export_${new Date().toISOString().split('T')[0]}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } else if (format === 'pdf') {
+      // For PDF, we'll create a simple print-friendly view
+      const printWindow = window.open('', '_blank')
+      const tableRows = dataToExport.map(c => {
+        return '<tr>' +
+          '<td>' + c.case_id + '</td>' +
+          '<td>' + c.customer_name + '</td>' +
+          '<td>' + c.merchant_name + '</td>' +
+          '<td>' + c.dispute_type + '</td>' +
+          '<td>' + c.status + '</td>' +
+          '<td>' + c.priority + '</td>' +
+          '<td>' + c.confidence + '%</td>' +
+          '<td>' + c.evidence_completion + '%</td>' +
+          '<td>' + c.updated_date + '</td>' +
+          '</tr>'
+      }).join('')
+      
+      const tableHTML = '<html>' +
+        '<head>' +
+          '<title>Case Report</title>' +
+          '<style>' +
+            'body { font-family: Arial, sans-serif; padding: 20px; }' +
+            'table { border-collapse: collapse; width: 100%; margin-top: 20px; }' +
+            'th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }' +
+            'th { background-color: #f4f4f4; }' +
+            'h1 { color: #333; }' +
+          '</style>' +
+        '</head>' +
+        '<body>' +
+          '<h1>Case Report - ' + new Date().toLocaleDateString() + '</h1>' +
+          '<table>' +
+            '<thead>' +
+              '<tr>' +
+                '<th>Case ID</th>' +
+                '<th>Customer</th>' +
+                '<th>Merchant</th>' +
+                '<th>Type</th>' +
+                '<th>Status</th>' +
+                '<th>Priority</th>' +
+                '<th>Confidence</th>' +
+                '<th>Evidence</th>' +
+                '<th>Updated</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              tableRows +
+            '</tbody>' +
+          '</table>' +
+        '</body>' +
+        '</html>'
+      
+      printWindow.document.write(tableHTML)
+      printWindow.document.close()
+      printWindow.print()
+    } else if (format === 'print') {
+      window.print()
+    }
+    
+    setExportOpen(false)
+  }
 
   const SortIcon = sortDir === 'asc' ? SortAsc : SortDesc
 
@@ -133,7 +241,97 @@ function CaseTable({ cases, onCaseClick }) {
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {selected.size > 0 && <span style={{ fontSize: 12, color: COLORS.primary, fontWeight: 600 }}>{selected.size} selected</span>}
-          <button className="diq-btn diq-btn-outline diq-btn-xs" title="Export"><Download size={14} /></button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="diq-btn diq-btn-outline diq-btn-xs" 
+              title="Export"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setExportOpen(!exportOpen)
+              }}
+            >
+              <Download size={14} />
+            </button>
+            {exportOpen && (
+              <div 
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 1000,
+                  background: '#fff', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                  border: '1px solid #E5E7EB', minWidth: 160, padding: '4px 0',
+                }}>
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExport('csv')
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 16px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', fontSize: 13, color: '#374151',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <FileSpreadsheet size={14} /> Export CSV
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExport('excel')
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 16px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', fontSize: 13, color: '#374151',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <FileSpreadsheet size={14} /> Export Excel
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExport('pdf')
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 16px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', fontSize: 13, color: '#374151',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <FileText size={14} /> Export PDF
+                </button>
+                <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExport('print')
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 16px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', fontSize: 13, color: '#374151',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Printer size={14} /> Print Report
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div style={{ overflowX: 'auto' }}>
@@ -172,6 +370,7 @@ function CaseTable({ cases, onCaseClick }) {
               return (
                 <tr key={c.id}
                   onClick={() => onCaseClick(c.id)}
+                  onDoubleClick={() => window.open(`/investigator/cases/${c.id}`, '_blank')}
                   style={{ cursor: 'pointer', background: selected.has(c.id) ? '#F5F3FF' : 'transparent' }}
                   onMouseEnter={e => { if (!selected.has(c.id)) e.currentTarget.style.background = '#F9FAFB' }}
                   onMouseLeave={e => { if (!selected.has(c.id)) e.currentTarget.style.background = 'transparent' }}
@@ -179,14 +378,46 @@ function CaseTable({ cases, onCaseClick }) {
                   <td style={{ padding: '10px 8px' }} onClick={e => e.stopPropagation()}>
                     <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} style={{ accentColor: COLORS.primary }} />
                   </td>
-                  <td style={{ padding: '10px 12px' }}><span className="diq-link" style={{ fontSize: 13 }}>{c.case_id || c.id}</span></td>
-                  <td style={{ padding: '10px 12px', fontWeight: 500 }}>{c.customer_name || '\u2014'}</td>
-                  <td style={{ padding: '10px 12px' }}>{c.merchant_name || '\u2014'}</td>
-                  <td style={{ padding: '10px 12px' }}><span className="diq-badge diq-badge-gray" style={{ fontSize: 11 }}>{c.dispute_type || '\u2014'}</span></td>
-                  <td style={{ padding: '10px 12px' }}><span className={`diq-badge ${s.cls}`} style={{ fontSize: 11 }}>{s.label}</span></td>
-                  <td style={{ padding: '10px 12px' }}><span className={`diq-pill ${pClass}`} style={{ fontSize: 11 }}>{c.priority}</span></td>
-                  <td style={{ padding: '10px 12px', fontWeight: 600, color: confidenceColor }}>{c.confidence || 0}%</td>
                   <td style={{ padding: '10px 12px' }}>
+                    <span 
+                      className="diq-link" 
+                      style={{ fontSize: 13, color: COLORS.primary, cursor: 'pointer' }}
+                      onClick={e => { e.stopPropagation(); onCaseClick(c.id) }}
+                    >
+                      {c.case_id || c.id}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px', fontWeight: 500, cursor: 'pointer' }} onClick={e => { e.stopPropagation(); console.log('Navigate to customer profile') }}>{c.customer_name || '\u2014'}</td>
+                  <td style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); console.log('Navigate to merchant profile') }}>{c.merchant_name || '\u2014'}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span 
+                      className="diq-badge diq-badge-gray" 
+                      style={{ fontSize: 11, cursor: 'pointer' }}
+                      onClick={e => { e.stopPropagation(); console.log('Filter by type:', c.dispute_type) }}
+                    >
+                      {c.dispute_type || '\u2014'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span 
+                      className={`diq-badge ${s.cls}`} 
+                      style={{ fontSize: 11, cursor: 'pointer' }}
+                      onClick={e => { e.stopPropagation(); console.log('Filter by status:', c.status) }}
+                    >
+                      {s.label}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span 
+                      className={`diq-pill ${pClass}`} 
+                      style={{ fontSize: 11, cursor: 'pointer' }}
+                      onClick={e => { e.stopPropagation(); console.log('Filter by priority:', c.priority) }}
+                    >
+                      {c.priority}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px', fontWeight: 600, color: confidenceColor, cursor: 'pointer' }} onClick={e => { e.stopPropagation(); console.log('Open AI analysis modal for case:', c.id) }}>{c.confidence || 0}%</td>
+                  <td style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); console.log('Navigate to evidence tab for case:', c.id) }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div className="diq-progress" style={{ width: 60, height: 6 }}>
                         <div className={`diq-progress-fill ${progressClass}`} style={{ width: `${c.evidence_completion || 0}%` }} />
@@ -196,10 +427,112 @@ function CaseTable({ cases, onCaseClick }) {
                   </td>
                   <td style={{ padding: '10px 12px', color: '#9CA3AF', fontSize: 12 }}>{formatDate(c.updated_date)}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-                    <button className="diq-btn diq-btn-secondary diq-btn-xs" style={{ height: 28, padding: '0 10px', fontSize: 11 }} onClick={e => { e.stopPropagation(); onCaseClick(c.id) }}>Open</button>
-                    <button className="diq-btn diq-btn-outline diq-btn-xs" style={{ height: 28, width: 28, padding: 0, marginLeft: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
-                      <MoreHorizontal size={12} />
+                    <button 
+                      className="diq-btn diq-btn-primary diq-btn-xs" 
+                      style={{ height: 28, padding: '0 10px', fontSize: 11 }} 
+                      onClick={e => { e.stopPropagation(); onCaseClick(c.id) }}
+                      onMouseEnter={e => e.currentTarget.style.background = COLORS.primary}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                    >
+                      Open
                     </button>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <button 
+                        className="diq-btn diq-btn-outline diq-btn-xs" 
+                        style={{ height: 28, width: 28, padding: 0, marginLeft: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} 
+                        onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === c.id ? null : c.id) }}
+                      >
+                        <MoreHorizontal size={12} />
+                      </button>
+                      {menuOpen === c.id && (
+                        <div 
+                          ref={menuRef}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          style={{
+                            position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 1000,
+                            background: '#fff', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                            border: '1px solid #E5E7EB', minWidth: 180, padding: '4px 0',
+                          }}
+                        >
+                          <button 
+                            onClick={() => { setMenuOpen(null); onCaseClick(c.id) }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              padding: '8px 16px', border: 'none', background: 'transparent',
+                              cursor: 'pointer', fontSize: 13, color: '#374151',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Eye size={14} /> View Case
+                          </button>
+                          <button 
+                            onClick={() => { setMenuOpen(null); console.log('Assign case:', c.id) }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              padding: '8px 16px', border: 'none', background: 'transparent',
+                              cursor: 'pointer', fontSize: 13, color: '#374151',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Users size={14} /> Assign Investigator
+                          </button>
+                          <button 
+                            onClick={() => { setMenuOpen(null); console.log('Download report:', c.id) }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              padding: '8px 16px', border: 'none', background: 'transparent',
+                              cursor: 'pointer', fontSize: 13, color: '#374151',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Download size={14} /> Download Report
+                          </button>
+                          <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+                          <button 
+                            onClick={(e) => { 
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setMenuOpen(null)
+                              alert(`Archive case ${c.case_id} (demo)`)
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              padding: '8px 16px', border: 'none', background: 'transparent',
+                              cursor: 'pointer', fontSize: 13, color: '#374151',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Archive size={14} /> Archive
+                          </button>
+                          <button 
+                            onClick={(e) => { 
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setMenuOpen(null)
+                              if (confirm(`Delete case ${c.case_id}? This action cannot be undone.`)) {
+                                alert(`Deleted case ${c.case_id} (demo)`)
+                              }
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              padding: '8px 16px', border: 'none', background: 'transparent',
+                              cursor: 'pointer', fontSize: 13, color: '#DC2626',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
@@ -207,6 +540,73 @@ function CaseTable({ cases, onCaseClick }) {
           </tbody>
         </table>
       </div>
+      {/* Bulk Actions Toolbar */}
+      {selected.size > 0 && (
+        <div 
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+          style={{ padding: '12px 20px', background: '#F5F3FF', borderTop: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.primary }}>{selected.size} cases selected</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              className="diq-btn diq-btn-outline diq-btn-xs" 
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleExport('csv')
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={14} /> Export
+            </button>
+            <button 
+              className="diq-btn diq-btn-outline diq-btn-xs" 
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                const selectedCases = cases.filter(c => selected.has(c.id))
+                alert(`Assign ${selectedCases.length} cases to investigator (demo)`)
+                setSelected(new Set())
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Users size={14} /> Assign
+            </button>
+            <button 
+              className="diq-btn diq-btn-outline diq-btn-xs" 
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                const selectedCases = cases.filter(c => selected.has(c.id))
+                alert(`Archive ${selectedCases.length} cases (demo)`)
+                setSelected(new Set())
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Archive size={14} /> Archive
+            </button>
+            <button 
+              className="diq-btn diq-btn-outline diq-btn-xs" 
+              style={{ color: COLORS.danger, borderColor: COLORS.danger, display: 'flex', alignItems: 'center', gap: 6 }} 
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (confirm(`Delete ${selected.size} selected cases? This action cannot be undone.`)) {
+                  const selectedCases = cases.filter(c => selected.has(c.id))
+                  alert(`Deleted ${selectedCases.length} cases (demo)`)
+                  setSelected(new Set())
+                }
+              }}
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pagination */}
       <div style={{ padding: '12px 20px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: '#6B7280' }}>
         <span>Showing {(page - 1) * pageSize + 1}\u2013{Math.min(page * pageSize, sorted.length)} of {sorted.length}</span>
@@ -451,6 +851,57 @@ export default function InvestigatorDashboard() {
     setShowFilters(false)
   }
 
+  // Live search - update results as user types
+  useEffect(() => {
+    if (searchTerm === '') {
+      setCases(dashboardData?.cases || [])
+      return
+    }
+    const term = searchTerm.toLowerCase()
+    const filtered = (dashboardData?.cases || []).filter(c =>
+      c.case_id.toLowerCase().includes(term) ||
+      c.customer_name.toLowerCase().includes(term) ||
+      c.merchant_name.toLowerCase().includes(term)
+    ).filter(c => !filters.priority || c.priority === filters.priority)
+     .filter(c => !filters.disputeType || c.dispute_type === filters.disputeType)
+     .filter(c => !filters.status || c.status === filters.status)
+    setCases(filtered)
+  }, [searchTerm, filters, dashboardData?.cases])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl + K: Global search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+      // Ctrl + N: New case
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault()
+        navigate('/investigator/cases/new')
+      }
+      // Ctrl + F: Search cases
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+      // Ctrl + R: Refresh dashboard
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault()
+        loadDashboard()
+      }
+      // Esc: Close modals/filters
+      if (e.key === 'Escape') {
+        setShowFilters(false)
+        setSearchTerm('')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [navigate, loadDashboard, searchRef])
+
   const resetFilters = () => {
     setFilters({ priority: '', disputeType: '', status: '', confidenceLevel: '' })
     setSearchTerm('')
@@ -499,6 +950,10 @@ export default function InvestigatorDashboard() {
           color={COLORS.primary} 
           bg={COLORS.primaryLight} 
           label="Total active" 
+          onClick={() => {
+            setFilters({ ...filters, status: 'under_investigation' })
+            setShowFilters(true)
+          }}
         />
         <KPICard 
           title="Pending Investigations" 
@@ -507,6 +962,10 @@ export default function InvestigatorDashboard() {
           color={COLORS.warning} 
           bg={COLORS.warningLight} 
           label="Awaiting review" 
+          onClick={() => {
+            setFilters({ ...filters, status: 'awaiting_evidence' })
+            setShowFilters(true)
+          }}
         />
         <KPICard 
           title="Completed Investigations" 
@@ -515,6 +974,10 @@ export default function InvestigatorDashboard() {
           color={COLORS.success} 
           bg={COLORS.successLight} 
           label="Resolved" 
+          onClick={() => {
+            setFilters({ ...filters, status: 'completed' })
+            setShowFilters(true)
+          }}
         />
         <KPICard 
           title="Cases Requiring Evidence" 
@@ -523,6 +986,10 @@ export default function InvestigatorDashboard() {
           color={COLORS.danger} 
           bg={COLORS.dangerLight} 
           label="Action needed" 
+          onClick={() => {
+            setFilters({ ...filters, priority: 'high' })
+            setShowFilters(true)
+          }}
         />
       </div>
 
