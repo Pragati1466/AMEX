@@ -120,12 +120,12 @@ graph TB
 
 | Module | Preview |
 |:---:|:---|
-| **Investigator Dashboard** | <img src="docs/screenshots/investigator-dashboard.jpeg" width="700" alt="Investigator Dashboard showing active dispute cases" /> |
-| **Evidence Upload Center** | <img src="docs/screenshots/evidence-upload-center.jpeg" width="700" alt="Evidence upload, validation, and missing evidence workspace" /> |
-| **Policy Compliance** | <img src="docs/screenshots/policy-compliance.jpeg" width="700" alt="Policy compliance and evidence coverage analysis" /> |
-| **Create New Case** | <img src="docs/screenshots/create-case.jpeg" width="700" alt="New dispute case intake form" /> |
-| **AI Explainability** | <img src="docs/screenshots/ai-explainability.jpeg" width="700" alt="Customer and merchant advocate explanations" /> |
-| **Live Fairness Score** | <img src="docs/screenshots/fairness-score.jpeg" width="700" alt="Fairness score, AI recommendation, and evidence completeness" /> |
+| **Investigator Dashboard** | <img src="1.jpeg" width="700" alt="Investigator Dashboard showing active dispute cases" /> |
+| **Evidence Upload Center** | <img src="2.jpeg" width="700" alt="Evidence upload, validation, and missing evidence workspace" /> |
+| **Policy Compliance** | <img src="3.jpeg" width="700" alt="Policy compliance and evidence coverage analysis" /> |
+| **Create New Case** | <img src="4.jpeg" width="700" alt="New dispute case intake form" /> |
+| **AI Explainability** | <img src="5.jpeg" width="700" alt="Customer and merchant advocate explanations" /> |
+| **Live Fairness Score** | <img src="6.jpeg" width="700" alt="Fairness score, AI recommendation, and evidence completeness" /> |
 
 </div>
 
