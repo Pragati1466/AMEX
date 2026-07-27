@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { ClipboardList, Search, RefreshCw, User } from 'lucide-react'
+import { Clipboard, Search, RefreshCw, User } from 'lucide-react'
 import { getAuditHistory } from '../../services/resolutionApi'
 import LoadingSkeleton from '../shared/LoadingSkeleton'
 import ErrorState from '../shared/ErrorState'
@@ -62,7 +62,7 @@ export default function AuditLogs() {
     <div className="space-y-5 p-1">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-          <ClipboardList className="w-5 h-5 text-indigo-500" />
+          <Clipboard className="w-5 h-5 text-indigo-500" />
           Audit Log ({filtered.length})
         </h2>
         <button

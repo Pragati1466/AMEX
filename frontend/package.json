@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-Powered Multi-Agent Dispute Resolution System",
   "private": true,
+  "type": "module",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

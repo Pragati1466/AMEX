@@ -22,6 +22,15 @@ export function formatPct(value) {
   return `${pct.toFixed(1)}%`
 }
 
+/** Format a number as currency */
+export function formatCurrency(value) {
+  if (value == null) return '—'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value)
+}
+
 /** Format a recommendation outcome enum value as a readable label */
 export function formatOutcome(outcome) {
   const map = {
