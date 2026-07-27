@@ -12,7 +12,6 @@ import {
   LayoutDashboard, FolderKanban, PlusCircle,
   Bell, ChevronDown,
 } from 'lucide-react'
-import axios from 'axios'
 
 // ── Module 1 pages ──────────────────────────────────────────────────────────
 import InvestigatorDashboard from './pages/investigator/InvestigatorDashboard'
@@ -33,9 +32,6 @@ import DecisionFlow from './components/resolution/DecisionFlow'
 import ReportCenter from './components/resolution/ReportCenter'
 import NotificationCenter from './components/resolution/NotificationCenter'
 import AuditLogs from './components/resolution/AuditLogs'
-
-const API_BASE =
-  import.meta.env.VITE_API_URL || 'https://disputiq-api.onrender.com/api/v1'
 
 // ── NavLink component ─────────────────────────────────────────────────────────
 function NavItem({ to, icon: Icon, label }) {
@@ -77,7 +73,6 @@ function App() {
   const [apiStatus, setApiStatus] = useState('loading')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
-  const [responseTime, setResponseTime] = useState(null)
 
   useEffect(() => {
     checkApiStatus()
@@ -85,21 +80,9 @@ function App() {
   }, [])
 
   const checkApiStatus = async () => {
-    const t0 = Date.now()
-    try {
-      await axios.get(`${API_BASE.replace('/api/v1', '')}/health`)
-      setResponseTime(Date.now() - t0)
-      setApiStatus('online')
-    } catch {
-      // In development mode, don't show API as offline if backend isn't running
-      if (import.meta.env.DEV) {
-        setApiStatus('dev_mode')
-        setResponseTime(null)
-      } else {
-        setApiStatus('offline')
-        setResponseTime(null)
-      }
-    }
+    // Set API status to dev mode since we're not using a backend
+    setApiStatus('dev_mode')
+    setResponseTime(null)
   }
 
   const checkAuth = () => {
@@ -116,25 +99,11 @@ function App() {
     const username = e.target.username.value
     const password = e.target.password.value
     
-    // Development mode: allow any login for testing
-    if (import.meta.env.DEV) {
-      localStorage.setItem('token', 'dev-token-' + Date.now())
-      localStorage.setItem('user', JSON.stringify({ username, role: 'investigator' }))
-      setIsAuthenticated(true)
-      setUser({ username, role: 'investigator' })
-      return
-    }
-    
-    // Production mode: authenticate with real API
-    try {
-      const res = await axios.post(`${API_BASE}/auth/login`, { username, password })
-      localStorage.setItem('token', res.data.access_token)
-      localStorage.setItem('user', JSON.stringify({ username, role: 'investigator' }))
-      setIsAuthenticated(true)
-      setUser({ username, role: 'investigator' })
-    } catch {
-      alert('Login failed. Please check your credentials.')
-    }
+    // Allow any login for testing (works in both dev and production)
+    localStorage.setItem('token', 'dev-token-' + Date.now())
+    localStorage.setItem('user', JSON.stringify({ username, role: 'investigator' }))
+    setIsAuthenticated(true)
+    setUser({ username, role: 'investigator' })
   }
 
   const handleLogout = () => {
@@ -269,7 +238,6 @@ function App() {
                     apiStatus === 'loading' ? 'Checking…' :
                     apiStatus === 'dev_mode' ? 'Dev Mode (No Backend)' : 'Disconnected'}
               </div>
-              {responseTime && <span>{responseTime}ms</span>}
             </div>
           </div>
         </div>
